@@ -1,0 +1,10 @@
+# Editor / OS noise
+*.swp
+*~
+.DS_Store
+
+# Validation tooling artifacts
+__pycache__/
+*.pyc
+.venv/
+node_modules/
