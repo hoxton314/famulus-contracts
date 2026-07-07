@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://famulus.dev/contracts/v1/tier-policy.schema.json",
+  "title": "Famulus C5 tier policy",
+  "description": "Permission/tier policy for famulus-agentd: a mandatory hard-deny path floor, an ordered first-match-wins list of tool rules, and a fully explicit default rule for unmatched tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "default_rule", "hard_deny", "rules"],
+  "properties": {
+    "version": {
+      "description": "Policy format version. This contract (contracts-v1) defines exactly version 1.",
+      "type": "integer",
+      "const": 1
+    },
+    "default_rule": {
+      "description": "The rule applied when no entry in 'rules' matches the tool name. All three fields are required here so the fallback is fully explicit.",
+      "$ref": "#/$defs/defaultRule"
+    },
+    "hard_deny": {
+      "description": "Path-based denials checked FIRST and independently of 'rules'. Access to these paths is never allowed regardless of any rule. At least one entry is required; validate_policy.py additionally enforces the contract-mandated floor entries.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/hardDenyEntry"
+      }
+    },
+    "rules": {
+      "description": "Ordered list of tool rules, evaluated top to bottom; the FIRST rule whose 'match' glob matches the tool name wins.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    }
+  },
+  "$defs": {
+    "tier": {
+      "description": "Permission tier: 0 = read-only/no-auth, 1 = user-authenticated, 2 = admin-authenticated. Carried on D-Bus as uint32 ('u').",
+      "type": "integer",
+      "enum": [0, 1, 2]
+    },
+    "behavior": {
+      "description": "What famulus-agentd does when this rule matches: 'auto-allow' runs the tool without prompting (tier 0 only), 'prompt' asks the user via the permission broker, 'deny' refuses without prompting.",
+      "type": "string",
+      "enum": ["auto-allow", "prompt", "deny"]
+    },
+    "requireSnapshot": {
+      "description": "When true, famulus-agentd MUST obtain a C4 snapshot (org.famulus.Snapshot1) before the tool runs.",
+      "type": "boolean"
+    },
+    "autoAllowTierZero": {
+      "description": "Constraint: behavior 'auto-allow' is only valid at tier 0. Tiers 1 and 2 require authentication, so they can never be auto-allowed.",
+      "if": {
+        "properties": {
+          "behavior": {
+            "description": "Trigger: the rule declares behavior 'auto-allow'.",
+            "const": "auto-allow"
+          }
+        },
+        "required": ["behavior"]
+      },
+      "then": {
+        "properties": {
+          "tier": {
+            "description": "auto-allow rules must be tier 0.",
+            "const": 0
+          }
+        }
+      }
+    },
+    "rule": {
+      "description": "A single tool rule: a glob over the tool name plus the tier, behavior, and snapshot requirement applied when it matches.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["match", "tier", "behavior"],
+      "properties": {
+        "match": {
+          "description": "fnmatch glob (Python fnmatch.fnmatchcase: '*' any run, '?' one character, '[seq]' character set; case-sensitive) matched against the full tool name as the claude CLI reports it, e.g. 'Bash' or 'mcp__famulus_desktop__wallpaper_set'.",
+          "type": "string",
+          "minLength": 1
+        },
+        "tier": {
+          "description": "Permission tier required for this tool (0, 1, or 2).",
+          "$ref": "#/$defs/tier"
+        },
+        "behavior": {
+          "description": "Behavior when this rule matches: 'auto-allow' (tier 0 only), 'prompt', or 'deny'.",
+          "$ref": "#/$defs/behavior"
+        },
+        "require_snapshot": {
+          "description": "Optional; defaults to false. When true, a C4 snapshot MUST be taken before the tool runs.",
+          "$ref": "#/$defs/requireSnapshot",
+          "default": false
+        },
+        "reason": {
+          "description": "Optional human-readable rationale, recorded in the C1 audit log and shown in permission prompts.",
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/autoAllowTierZero"
+        }
+      ]
+    },
+    "defaultRule": {
+      "description": "The fallback rule for tools no 'rules' entry matches. Unlike list rules, all three fields are required so the fallback is fully explicit.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "behavior", "require_snapshot"],
+      "properties": {
+        "tier": {
+          "description": "Permission tier applied to unmatched tools (0, 1, or 2).",
+          "$ref": "#/$defs/tier"
+        },
+        "behavior": {
+          "description": "Behavior applied to unmatched tools: 'auto-allow' (tier 0 only), 'prompt', or 'deny'.",
+          "$ref": "#/$defs/behavior"
+        },
+        "require_snapshot": {
+          "description": "Whether a C4 snapshot MUST be taken before an unmatched tool runs. Required here — the fallback must be explicit.",
+          "$ref": "#/$defs/requireSnapshot"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/autoAllowTierZero"
+        }
+      ]
+    },
+    "hardDenyEntry": {
+      "description": "A path glob denied regardless of any rule; enforced before and independently of 'rules' (by hooks/polkit on file-touching tool inputs).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "access", "reason"],
+      "properties": {
+        "path": {
+          "description": "Path glob the denial applies to. '**' spans directory levels; a leading '~' means the target user's home directory.",
+          "type": "string",
+          "minLength": 1
+        },
+        "access": {
+          "description": "Access modes denied for this path. Unique, at least one of 'read' or 'write'.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "description": "A denied access mode.",
+            "type": "string",
+            "enum": ["read", "write"]
+          }
+        },
+        "reason": {
+          "description": "Human-readable rationale. Required for hard-deny entries because they override everything else.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

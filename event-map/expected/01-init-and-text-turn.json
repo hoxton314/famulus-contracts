@@ -1,0 +1,30 @@
+[
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "Hello"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": " from"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": " Famulus."
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":1600,\"duration_ms\":1850,\"is_error\":false,\"num_turns\":1,\"session_id\":\"3f0c9a2e-6b1d-4c8f-9a2e-1d0c4b5a3f2e\",\"total_cost_usd\":0.0034,\"usage\":{\"input_tokens\":12,\"output_tokens\":9}}"
+    }
+  }
+]

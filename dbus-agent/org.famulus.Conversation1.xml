@@ -1,0 +1,58 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<node>
+  <interface name="org.famulus.Conversation1">
+    <annotation name="org.gtk.GDBus.DocString" value="One conversation backed by one supervised claude CLI process. Exported by famulus-agentd at /org/famulus/Agent1/conversations/&lt;id&gt;. All streaming output of a turn is delivered via signals carrying the daemon-generated turn_id returned by SendMessage."/>
+    <method name="SendMessage">
+      <annotation name="org.gtk.GDBus.DocString" value="Send a user message to the conversation. Returns a daemon-generated turn_id immediately; the response streams asynchronously via signals carrying the same turn_id."/>
+      <arg name="text" type="s" direction="in"/>
+      <arg name="turn_id" type="s" direction="out"/>
+    </method>
+    <method name="Cancel">
+      <annotation name="org.gtk.GDBus.DocString" value="Interrupt the in-flight turn, if any. A no-op when the conversation is idle."/>
+    </method>
+    <method name="GetTranscript">
+      <annotation name="org.gtk.GDBus.DocString" value="Return the accumulated transcript as a JSON array of message objects in claude stream-json message shape."/>
+      <arg name="transcript_json" type="s" direction="out"/>
+    </method>
+    <method name="Close">
+      <annotation name="org.gtk.GDBus.DocString" value="Terminate the supervised claude CLI process and remove this object from the bus."/>
+    </method>
+    <signal name="ResponseDelta">
+      <annotation name="org.gtk.GDBus.DocString" value="A streamed chunk of assistant text for the given turn. Consumers concatenate chunks per turn_id in emission order."/>
+      <arg name="turn_id" type="s"/>
+      <arg name="text_chunk" type="s"/>
+    </signal>
+    <signal name="ToolCall">
+      <annotation name="org.gtk.GDBus.DocString" value="The CLI started a tool invocation. input_json is the canonical-JSON tool input; tier is the C5 permission tier resolved for this call."/>
+      <arg name="turn_id" type="s"/>
+      <arg name="tool_name" type="s"/>
+      <arg name="input_json" type="s"/>
+      <arg name="tier" type="u"/>
+    </signal>
+    <signal name="ToolResult">
+      <annotation name="org.gtk.GDBus.DocString" value="A tool invocation finished. result_json is the canonical-JSON tool result; is_error is true when the tool failed."/>
+      <arg name="turn_id" type="s"/>
+      <arg name="tool_name" type="s"/>
+      <arg name="result_json" type="s"/>
+      <arg name="is_error" type="b"/>
+    </signal>
+    <signal name="PermissionRequest">
+      <annotation name="org.gtk.GDBus.DocString" value="The permission broker needs a decision for a tool call. The broker reply to the CLI is blocked until RespondPermission(request_id, ...) is called on org.famulus.Agent1 or the request times out as deny."/>
+      <arg name="request_id" type="s"/>
+      <arg name="tool_name" type="s"/>
+      <arg name="input_json" type="s"/>
+      <arg name="tier" type="u"/>
+    </signal>
+    <signal name="ResponseComplete">
+      <annotation name="org.gtk.GDBus.DocString" value="The turn finished. result_json validates against response-complete.schema.json; per-turn API errors are reported here with is_error true."/>
+      <arg name="turn_id" type="s"/>
+      <arg name="result_json" type="s"/>
+    </signal>
+    <signal name="ConversationError">
+      <annotation name="org.gtk.GDBus.DocString" value="Process-level failure: CLI crash, unparseable stream-json, or unexpected EOF. Per-turn API errors use ResponseComplete instead."/>
+      <arg name="message" type="s"/>
+    </signal>
+  </interface>
+</node>

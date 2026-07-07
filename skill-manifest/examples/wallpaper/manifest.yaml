@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# C3 skill manifest — ships next to SKILL.md in the wallpaper skill directory.
+# Tier 0: read-only/no-auth desktop tweak; no polkit, no snapshot, no network.
+name: wallpaper
+version: "1.0.0"
+tier: 0
+mutates_system: false
+polkit_actions: []
+files_touched:
+  - "~/.config/dconf/user"
+  - "~/.local/share/backgrounds/**"
+network_access: false
+description: >-
+  Changes the GNOME desktop wallpaper by writing the
+  org.gnome.desktop.background keys in the user dconf database and, when the
+  user supplies a local image, copying it into the per-user backgrounds
+  directory. Touches only user-session state; requires no authentication.
