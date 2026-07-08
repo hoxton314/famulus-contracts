@@ -226,5 +226,4 @@ non-emptiness; the contract deliberately does not over-constrain it.
 
 ## Stability
 
-Frozen at tag contracts-v1. Changes require an ADR, maintainer review,
-and a new frozen tag; already-frozen tags are never rewritten.
+Frozen at tag contracts-v1. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
