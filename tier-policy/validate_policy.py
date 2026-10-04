@@ -149,6 +149,12 @@ def main(argv=None):
         return 2
 
     try:
+        jsonschema.Draft202012Validator.check_schema(schema)
+    except jsonschema.SchemaError as exc:
+        print(f"error: invalid schema {schema_path}: {exc.message}", file=sys.stderr)
+        return 2
+
+    try:
         text = policy_path.read_text(encoding="utf-8")
     except OSError as exc:
         print(f"error: cannot read policy {policy_path}: {exc}", file=sys.stderr)

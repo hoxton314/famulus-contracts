@@ -25,8 +25,8 @@ described in RFC 2119.
 Run from the repo root:
 
 ```sh
-/usr/bin/gdbus-codegen --interface-info-body --output /dev/null dbus-agent/org.famulus.Agent1.xml
-/usr/bin/gdbus-codegen --interface-info-body --output /dev/null dbus-agent/org.famulus.Conversation1.xml
+gdbus-codegen --interface-info-body --output /dev/null dbus-agent/org.famulus.Agent1.xml
+gdbus-codegen --interface-info-body --output /dev/null dbus-agent/org.famulus.Conversation1.xml
 .venv/bin/python dbus-agent/validate_response_complete.py PAYLOAD.json [PAYLOAD.json ...]
 .venv/bin/python -m unittest discover -s dbus-agent -v
 ```

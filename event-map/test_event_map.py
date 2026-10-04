@@ -49,8 +49,8 @@ class TestFixturesParse(unittest.TestCase):
 
     def test_every_line_is_json(self):
         for path in sorted(FIXTURES_DIR.glob("*.ndjson")):
-            for lineno, raw in enumerate(
-                    path.read_text(encoding="utf-8").splitlines(), 1):
+            lines = path.read_text(encoding="utf-8").splitlines()
+            for lineno, raw in enumerate(lines, 1):
                 if not raw.strip():
                     continue
                 with self.subTest(fixture=path.name, line=lineno):

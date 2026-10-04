@@ -209,6 +209,18 @@ class TestNegatives(unittest.TestCase):
         self.assertTrue(out.getvalue().startswith("FAIL:"))
         self.assertIn("version", err.getvalue())
 
+    def test_cli_exits_two_on_malformed_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            schema_path = Path(tmp) / "bad.schema.json"
+            schema_path.write_text(json.dumps({"type": "not-a-type"}), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                rc = validate_policy.main(
+                    [str(validate_policy.DEFAULT_SCHEMA_PATH.parent / "default-policy.yaml"),
+                     "--schema", str(schema_path)])
+        self.assertEqual(rc, 2)
+        self.assertIn("invalid schema", err.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

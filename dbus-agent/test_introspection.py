@@ -7,6 +7,7 @@ Run from the repo root:
 """
 
 import json
+import shutil
 import subprocess
 import unittest
 import xml.etree.ElementTree as ET
@@ -18,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 AGENT_XML = HERE / "org.famulus.Agent1.xml"
 CONVERSATION_XML = HERE / "org.famulus.Conversation1.xml"
 SCHEMA_PATH = HERE / "response-complete.schema.json"
-GDBUS_CODEGEN = Path("/usr/bin/gdbus-codegen")
+GDBUS_CODEGEN = shutil.which("gdbus-codegen")
 
 DOCTYPE_PREFIX = (
     '<!DOCTYPE node PUBLIC '
@@ -181,19 +182,19 @@ class StructuralLockTest(unittest.TestCase):
 
 
 class GDBusCodegenTest(unittest.TestCase):
-    @unittest.skipUnless(GDBUS_CODEGEN.is_file(), "gdbus-codegen not installed")
+    @unittest.skipUnless(GDBUS_CODEGEN, "gdbus-codegen not installed")
     def test_agent1_passes_gdbus_codegen(self):
         proc = subprocess.run(
-            [str(GDBUS_CODEGEN), "--interface-info-body",
+            [GDBUS_CODEGEN, "--interface-info-body",
              "--output", "/dev/null", str(AGENT_XML)],
             capture_output=True, text=True,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
-    @unittest.skipUnless(GDBUS_CODEGEN.is_file(), "gdbus-codegen not installed")
+    @unittest.skipUnless(GDBUS_CODEGEN, "gdbus-codegen not installed")
     def test_conversation1_passes_gdbus_codegen(self):
         proc = subprocess.run(
-            [str(GDBUS_CODEGEN), "--interface-info-body",
+            [GDBUS_CODEGEN, "--interface-info-body",
              "--output", "/dev/null", str(CONVERSATION_XML)],
             capture_output=True, text=True,
         )
