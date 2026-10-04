@@ -35,6 +35,8 @@ def map_line(state, line_obj, turn_id):
     """Map one parsed stdout NDJSON line to a list of D-Bus signal emissions."""
     kind = line_obj.get("type")
     if kind == "system":
+        # init repeats at the start of every turn (observed, CLI 2.1.284): idempotent store.
+        # Other subtypes (status, thinking_tokens, ...) are ignored in v1.
         if line_obj.get("subtype") == "init":  # none -- internal: store session info
             state["session_id"] = line_obj.get("session_id")
         return []
@@ -52,7 +54,7 @@ def map_line(state, line_obj, turn_id):
             if block.get("type") == "tool_use":
                 state["tool_names"][block["id"]] = block["name"]
                 emissions.append({"signal": "ToolCall", "args": {
-                    "turn_id": turn_id, "tool_name": block["name"],
+                    "turn_id": turn_id, "tool_use_id": block["id"], "tool_name": block["name"],
                     "input_json": canonical_json(block.get("input", {})),
                     "tier": tier_for_tool(block["name"])}})
             elif block.get("type") == "text" and not state["text_streamed"]:
@@ -70,6 +72,7 @@ def map_line(state, line_obj, turn_id):
             raw = block.get("content", "")  # string stays; list is canonicalized
             emissions.append({"signal": "ToolResult", "args": {
                 "turn_id": turn_id,
+                "tool_use_id": block.get("tool_use_id", ""),
                 "tool_name": state["tool_names"].get(block.get("tool_use_id"), ""),
                 "result_json": raw if isinstance(raw, str) else canonical_json(raw),
                 "is_error": bool(block.get("is_error", False))}})
@@ -78,12 +81,14 @@ def map_line(state, line_obj, turn_id):
         payload = {"session_id": line_obj.get("session_id") or state["session_id"],
                    "total_cost_usd": line_obj["total_cost_usd"],
                    "is_error": line_obj["is_error"], "num_turns": line_obj["num_turns"]}
-        for key in ("duration_ms", "duration_api_ms", "usage"):
+        for key in ("duration_ms", "duration_api_ms", "usage", "subtype", "terminal_reason"):
             if key in line_obj:
                 payload[key] = line_obj[key]
         state["text_streamed"] = False  # turn boundary
         return [{"signal": "ResponseComplete", "args": {"turn_id": turn_id, "result_json": canonical_json(payload)}}]
-    return []  # unrecognized top-level type: ignored in v1 (the daemon logs it)
+    # control_response (ack of a stdin control_request), rate_limit_event and any
+    # unrecognized top-level type: no signal in v1 (the daemon logs it)
+    return []
 
 
 def _usage():

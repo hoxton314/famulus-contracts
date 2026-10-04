@@ -13,7 +13,7 @@ Famulus is an open-source, AI-native atomic Linux distribution built on Fedora A
 | C3 | [`skill-manifest/`](skill-manifest/) | Schema for the `manifest.yaml` that ships next to each `SKILL.md`, with example manifests. |
 | C4 | [`dbus-snapshot/`](dbus-snapshot/) | `org.famulus.Snapshot1` D-Bus introspection XML and the `snapshot_ref` format spec. |
 | C5 | [`tier-policy/`](tier-policy/) | Machine-readable permission/tier policy format, the shipped default policy, and the hard-deny floor. |
-| C6 | [`event-map/`](event-map/) | Claude stream-json → C2 D-Bus signal event map: normative table, synthetic NDJSON fixtures, reference mapper. |
+| C6 | [`event-map/`](event-map/) | Claude stream-json → C2 D-Bus signal event map: normative table, synthetic NDJSON fixtures, sanitized real-CLI recordings (verified against `claude` 2.1.284), reference mapper. |
 
 **Stability:** frozen at `contracts-v1`. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
 

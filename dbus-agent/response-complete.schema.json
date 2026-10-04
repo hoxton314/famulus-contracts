@@ -37,6 +37,16 @@
     "usage": {
       "type": "object",
       "description": "Optional free-form token-usage object as reported by the claude CLI."
+    },
+    "subtype": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional passthrough of the CLI result subtype (e.g. success, error_during_execution, error_max_turns). Open set: consumers MUST NOT reject unknown values."
+    },
+    "terminal_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional passthrough of the CLI terminal_reason (e.g. completed; aborted_streaming after Cancel). Open set: consumers MUST NOT reject unknown values."
     }
   },
   "required": ["session_id", "total_cost_usd", "is_error", "num_turns"],

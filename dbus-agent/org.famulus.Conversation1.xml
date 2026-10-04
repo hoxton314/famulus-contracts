@@ -25,25 +25,34 @@
       <arg name="text_chunk" type="s"/>
     </signal>
     <signal name="ToolCall">
-      <annotation name="org.gtk.GDBus.DocString" value="The CLI started a tool invocation. input_json is the canonical-JSON tool input; tier is the C5 permission tier resolved for this call."/>
+      <annotation name="org.gtk.GDBus.DocString" value="The CLI started a tool invocation. tool_use_id is the CLI's tool_use block id (correlates ToolCall, PermissionRequest and ToolResult); input_json is the canonical-JSON tool input; tier is the C5 permission tier resolved for this call."/>
       <arg name="turn_id" type="s"/>
+      <arg name="tool_use_id" type="s"/>
       <arg name="tool_name" type="s"/>
       <arg name="input_json" type="s"/>
       <arg name="tier" type="u"/>
     </signal>
     <signal name="ToolResult">
-      <annotation name="org.gtk.GDBus.DocString" value="A tool invocation finished. result_json is the canonical-JSON tool result; is_error is true when the tool failed."/>
+      <annotation name="org.gtk.GDBus.DocString" value="A tool invocation finished. tool_use_id matches the ToolCall it completes; result_json is the canonical-JSON tool result; is_error is true when the tool failed or was denied."/>
       <arg name="turn_id" type="s"/>
+      <arg name="tool_use_id" type="s"/>
       <arg name="tool_name" type="s"/>
       <arg name="result_json" type="s"/>
       <arg name="is_error" type="b"/>
     </signal>
     <signal name="PermissionRequest">
-      <annotation name="org.gtk.GDBus.DocString" value="The permission broker needs a decision for a tool call. The broker reply to the CLI is blocked until RespondPermission(request_id, ...) is called on org.famulus.Agent1 or the request times out as deny."/>
+      <annotation name="org.gtk.GDBus.DocString" value="The permission broker needs a decision for a tool call. turn_id is the in-flight turn; tool_use_id matches the ToolCall being gated. The broker reply to the CLI is blocked until RespondPermission(request_id, ...) is called on org.famulus.Agent1 or the request times out as deny."/>
       <arg name="request_id" type="s"/>
+      <arg name="turn_id" type="s"/>
+      <arg name="tool_use_id" type="s"/>
       <arg name="tool_name" type="s"/>
       <arg name="input_json" type="s"/>
       <arg name="tier" type="u"/>
+    </signal>
+    <signal name="PermissionResolved">
+      <annotation name="org.gtk.GDBus.DocString" value="A pending PermissionRequest was settled — answered by any client via RespondPermission, or timed out. behavior is allow or deny (a timeout is deny). Every client showing a dialog for request_id MUST dismiss it."/>
+      <arg name="request_id" type="s"/>
+      <arg name="behavior" type="s"/>
     </signal>
     <signal name="ResponseComplete">
       <annotation name="org.gtk.GDBus.DocString" value="The turn finished. result_json validates against response-complete.schema.json; per-turn API errors are reported here with is_error true."/>
@@ -54,5 +63,14 @@
       <annotation name="org.gtk.GDBus.DocString" value="Process-level failure: CLI crash, unparseable stream-json, or unexpected EOF. Per-turn API errors use ResponseComplete instead."/>
       <arg name="message" type="s"/>
     </signal>
+    <property name="Id" type="s" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="Stable conversation id; equals the last element of this object's path and the conversation's directory name under ~/.local/share/famulus/conversations/."/>
+    </property>
+    <property name="SessionId" type="s" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="claude CLI session_id used for --resume; the empty string until the CLI has reported one. Emits PropertiesChanged."/>
+    </property>
+    <property name="Busy" type="b" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="True from SendMessage until the matching ResponseComplete or ConversationError. Emits PropertiesChanged."/>
+    </property>
   </interface>
 </node>

@@ -68,21 +68,29 @@ EXPECTED_CONVERSATION1 = {
         ],
         "ToolCall": [
             ("turn_id", "s"),
+            ("tool_use_id", "s"),
             ("tool_name", "s"),
             ("input_json", "s"),
             ("tier", "u"),
         ],
         "ToolResult": [
             ("turn_id", "s"),
+            ("tool_use_id", "s"),
             ("tool_name", "s"),
             ("result_json", "s"),
             ("is_error", "b"),
         ],
         "PermissionRequest": [
             ("request_id", "s"),
+            ("turn_id", "s"),
+            ("tool_use_id", "s"),
             ("tool_name", "s"),
             ("input_json", "s"),
             ("tier", "u"),
+        ],
+        "PermissionResolved": [
+            ("request_id", "s"),
+            ("behavior", "s"),
         ],
         "ResponseComplete": [
             ("turn_id", "s"),
@@ -92,7 +100,11 @@ EXPECTED_CONVERSATION1 = {
             ("message", "s"),
         ],
     },
-    "properties": {},
+    "properties": {
+        "Id": ("s", "read"),
+        "SessionId": ("s", "read"),
+        "Busy": ("b", "read"),
+    },
 }
 
 
@@ -204,6 +216,8 @@ class ResponseCompleteSchemaTest(unittest.TestCase):
             "duration_ms": 15234,
             "duration_api_ms": 9120,
             "usage": {"input_tokens": 812, "output_tokens": 344},
+            "subtype": "success",
+            "terminal_reason": "completed",
         }
 
     def test_schema_is_valid_draft_2020_12(self):
