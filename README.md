@@ -1,10 +1,10 @@
 # famulus-contracts
 
-famulus-contracts is the single source of truth for the six Famulus interface contracts, C1–C6, that bind every other repo in the project together. It holds the JSON Schemas, D-Bus introspection XML, YAML manifest and policy shapes, and the Claude stream-json → D-Bus event map. Contracts are versioned and released as frozen git tags; all other repos build against tag `contracts-v1`. This repo is deliberately licensed under Apache-2.0 (SPDX: `Apache-2.0`) — permissive rather than copyleft — so that anyone, including third-party tools, can implement the contracts without copyleft obligations.
+famulus-contracts is the single source of truth for the seven Famulus interface contracts, C1–C7, that bind every other repo in the project together. It holds the JSON Schemas, D-Bus introspection XML, YAML manifest and policy shapes, and the Claude stream-json → D-Bus event map. Contracts are versioned and released as frozen git tags; all other repos build against tag `contracts-v1`. This repo is deliberately licensed under Apache-2.0 (SPDX: `Apache-2.0`) — permissive rather than copyleft — so that anyone, including third-party tools, can implement the contracts without copyleft obligations.
 
 Famulus is an open-source, AI-native atomic Linux distribution built on Fedora Atomic, whose chat app and GNOME Shell panel supervise the unmodified official `claude` CLI and control the system through curated MCP servers, skills, polkit permission tiers, snapshot-before-mutate rollback, and a hash-chained audit log. Every one of those moving parts talks to the others across a contract defined here: the audit-log schema, the `org.famulus.Agent1` and `org.famulus.Snapshot1` D-Bus interfaces, the skill manifest, the permission/tier policy, and the stream-json event map. Keeping those definitions in one small, frozen, permissively licensed repo is what lets the rest of the project evolve independently without drifting apart.
 
-## The six contracts
+## The seven contracts
 
 | ID | Directory | Contract |
 |----|-----------|----------|
@@ -14,6 +14,7 @@ Famulus is an open-source, AI-native atomic Linux distribution built on Fedora A
 | C4 | [`dbus-snapshot/`](dbus-snapshot/) | `org.famulus.Snapshot1` D-Bus introspection XML and the `snapshot_ref` format spec. |
 | C5 | [`tier-policy/`](tier-policy/) | Machine-readable permission/tier policy format, the shipped default policy, and the hard-deny floor. |
 | C6 | [`event-map/`](event-map/) | Claude stream-json → C2 D-Bus signal event map: normative table, synthetic NDJSON fixtures, sanitized real-CLI recordings (verified against `claude` 2.1.284), reference mapper. |
+| C7 | [`dbus-audit/`](dbus-audit/) | `org.famulus.Audit1` D-Bus introspection XML — the root audit-writer service that alone appends C1 records (per-uid chains, writer-assigned hashes, cgroup-gated `Append`). |
 
 **Stability:** frozen at `contracts-v1`. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
 

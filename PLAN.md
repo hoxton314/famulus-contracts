@@ -1,6 +1,6 @@
 # PLAN.md — famulus-contracts
 
-> Repo role: **single source of truth for the six frozen interface contracts (C1–C6)**. Every other repo builds against the tag `contracts-v1`. License: Apache-2.0.
+> Repo role: **single source of truth for the seven frozen interface contracts (C1–C7; C7 audit-writer added during freeze review)**. Every other repo builds against the tag `contracts-v1`. License: Apache-2.0.
 > Master plan: `famulus-meta/famulus-execution-plan.md` (Part 0 ADRs, Part 2 phases).
 
 ## Scope
@@ -26,10 +26,10 @@ Schemas, D-Bus introspection XML, policy files, event-map spec, fixtures, and va
 - **C6:** `system/init`→store session_id; `stream_event .event.delta.text`→`ResponseDelta`; assistant `tool_use`→`ToolCall`; tool results→`ToolResult`; `result`→`ResponseComplete`. Mark the stdin user-turn envelope `{"type":"user","message":{...}}` as **inferred** (Anthropic issue #24594) — discrepancies found downstream feed a `contracts-v1.1` revision.
 
 ## Process
-1. All six contracts land in a single PR `phase0-contracts` (sequential, one agent).
+1. All contracts land in a single PR `phase0-contracts` (sequential, one agent).
 2. Human review → merge → tag **`contracts-v1`** → announce to all repos.
 3. Breaking changes after the freeze require a new tag (`contracts-v1.1`) + compat notes + sign-off from maintainer; CI runs schema-compat checks blocking silent breaks.
 
 ## Definition of done (Phase 0 gate)
 - `just validate` runs all validators + tests green; every schema passes its meta-schema.
-- Root README lists all six contracts, one line each, stability note "frozen at contracts-v1".
+- Root README lists all seven contracts, one line each, stability note "frozen at contracts-v1".

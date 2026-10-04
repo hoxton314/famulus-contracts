@@ -1,0 +1,40 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  Famulus contract C7: org.famulus.Audit1
+  Bus:         SYSTEM bus (the audit log is root-owned)
+  Bus name:    org.famulus.Audit1
+  Object path: /org/famulus/Audit1
+  Normative specification: README.md in this directory.
+-->
+<node>
+  <interface name="org.famulus.Audit1">
+    <annotation name="org.gtk.GDBus.DocString"
+                value="Sole writer of the Famulus C1 audit log. Keeps one hash chain per calling Unix user under /var/log/famulus/audit/uid-&lt;uid&gt;/. The service, not the client, assigns ts, prev_hash and hash, so clients can append records but can never choose chain linkage. The caller's uid is always taken from the bus connection credentials; no method accepts a uid argument. The interface deliberately has no signals: system-bus broadcasts would leak one user's activity metadata to every other user."/>
+    <method name="Append">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Append one record to the caller's chain. record_json is a JSON object valid against append-request.schema.json (a C1 record without ts, prev_hash, hash). The service stamps ts (its own clock, UTC), links prev_hash to the caller's chain head, computes hash per C1 HASHING.md, durably writes the line (fsync) and only then returns. Accepted only from processes in the caller's famulus-agentd.service cgroup; anything else raises org.famulus.Audit1.Error.AccessDenied. Raises org.famulus.Audit1.Error.InvalidRecord on schema/float violations and org.famulus.Audit1.Error.DuplicateEvent if event_id already exists in the caller's chain."/>
+      <arg direction="in" type="s" name="record_json"/>
+      <arg direction="out" type="s" name="ts"/>
+      <arg direction="out" type="s" name="hash"/>
+    </method>
+    <method name="Query">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Read complete C1 records from the caller's own chain, in chain order. conversation_id filters by conversation (empty string = all). after_event_id resumes after that record (empty string = from the genesis record); an unknown id raises org.famulus.Audit1.Error.NotFound. limit caps the number of records (0 = service default, at most 1000). records_ndjson holds one canonical-JSON C1 record per LF-terminated line; more is true when further matching records exist after the last one returned."/>
+      <arg direction="in" type="s" name="conversation_id"/>
+      <arg direction="in" type="s" name="after_event_id"/>
+      <arg direction="in" type="u" name="limit"/>
+      <arg direction="out" type="s" name="records_ndjson"/>
+      <arg direction="out" type="b" name="more"/>
+    </method>
+    <method name="Verify">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Verify the caller's whole chain per C1 HASHING.md and compare its head with the service's latest anchor (which detects tail truncation). ok is true only when the chain verifies and the head matches the anchor. record_count is the number of records, head_hash the hash of the last record (64 zeros for an empty chain), message a human-readable diagnosis (empty when ok)."/>
+      <arg direction="out" type="b" name="ok"/>
+      <arg direction="out" type="u" name="record_count"/>
+      <arg direction="out" type="s" name="head_hash"/>
+      <arg direction="out" type="s" name="message"/>
+    </method>
+  </interface>
+</node>

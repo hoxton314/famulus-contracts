@@ -4,7 +4,7 @@ Famulus is an open-source (AGPL-3.0), non-profit, AI-native atomic Linux distrib
 
 ## This repo
 
-This repo is the single source of truth for the six Famulus interface contracts C1–C6 that bind every other repo together: JSON Schemas, D-Bus introspection XML, YAML manifest/policy shapes, and the Claude stream-json → D-Bus event map. Contracts are versioned and released as frozen git tags; all other repos build against tag `contracts-v1`. It is deliberately licensed Apache-2.0 (permissive) so that anyone — including third-party tools — can implement the contracts without copyleft obligations.
+This repo is the single source of truth for the seven Famulus interface contracts C1–C7 that bind every other repo together: JSON Schemas, D-Bus introspection XML, YAML manifest/policy shapes, and the Claude stream-json → D-Bus event map. Contracts are versioned and released as frozen git tags; all other repos build against tag `contracts-v1`. It is deliberately licensed Apache-2.0 (permissive) so that anyone — including third-party tools — can implement the contracts without copyleft obligations.
 
 What does NOT belong here:
 
@@ -29,6 +29,7 @@ All cross-repo interface shapes are defined in famulus-contracts and are frozen 
 - **C4** — `org.famulus.Snapshot1` snapshot API
 - **C5** — permission/tier policy
 - **C6** — Claude stream-json → D-Bus event map
+- **C7** — `org.famulus.Audit1` audit-writer service
 
 ## Coding standards
 

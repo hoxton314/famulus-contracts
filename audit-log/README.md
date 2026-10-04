@@ -8,8 +8,10 @@ deployment context, and with what result.
 
 Consumers:
 
-- **famulus-agentd** writes the log (one record appended per agent
-  action, hash-chained per HASHING.md).
+- **famulus-auditd** (root system service) is the sole writer: famulus-agentd
+  submits one record per agent action over the C7 `org.famulus.Audit1`
+  interface (`dbus-audit/`), and the service assigns `ts`, `prev_hash`,
+  and `hash` per HASHING.md, keeping one chain per uid.
 - **famulus-gui** and external auditors verify and display it, using
   `validate_chain.py` or any conforming reimplementation.
 

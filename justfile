@@ -12,7 +12,7 @@ venv:
     @test -x {{python}} || (python3 -m venv .venv && .venv/bin/pip install --quiet -r tools/requirements.txt)
 
 # Run everything: meta-schema checks plus every contract's validator and tests.
-validate: venv schemas c1 c2 c3 c4 c5 c6
+validate: venv schemas c1 c2 c3 c4 c5 c6 c7
     @echo "OK: all contract validators and tests passed."
 
 # Every *.schema.json must pass the draft 2020-12 meta-schema.
@@ -42,6 +42,11 @@ c4: venv
 c5: venv
     {{python}} -m unittest discover -s tier-policy -v
     {{python}} tier-policy/validate_policy.py tier-policy/default-policy.yaml
+
+# C7 — org.famulus.Audit1 audit-writer D-Bus interface + Append payload schema.
+c7: venv
+    {{python}} -m unittest discover -s dbus-audit -v
+    {{python}} dbus-audit/validate_append_request.py dbus-audit/fixtures/valid-tier0.json dbus-audit/fixtures/valid-tier2-snapshot.json
 
 # C6 — Claude stream-json → D-Bus event map fixtures + reference mapper.
 c6: venv

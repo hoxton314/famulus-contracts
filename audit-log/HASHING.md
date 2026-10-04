@@ -102,10 +102,11 @@ Limitations:
   the whole file can recompute a consistent chain. External anchoring
   also mitigates this.
 
-Therefore famulus-agentd SHOULD periodically anchor the latest `hash`
-outside the log itself (for example in a separate root-owned location,
-systemd journal entry, or remote store), and auditors SHOULD compare the
-final record's `hash` against the most recent anchor.
+Therefore the audit writer (famulus-auditd, contract C7) SHOULD anchor
+the latest `hash` outside the log itself (for example in a separate
+root-owned location, systemd journal entry, or remote store), and
+auditors SHOULD compare the final record's `hash` against the most
+recent anchor.
 
 ## 8. Worked example (test vector)
 

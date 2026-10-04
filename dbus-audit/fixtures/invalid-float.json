@@ -1,0 +1,1 @@
+{"actor":"agent","conversation_id":"0192f3a0c1d27e4fb6a8","decision":"auto-allow","deployment_before":null,"event_id":"019f3ce3-fc82-7a1c-8f3b-1d2e4a6c8b0f","input_redacted":{"volume":0.5},"result":"ok","snapshot_ref":null,"tier":1,"tool":"mcp__famulus_desktop__volume_set"}
