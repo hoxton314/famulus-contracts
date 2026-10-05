@@ -1,0 +1,86 @@
+[
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "1\n2"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n3\n4\n5"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n6\n7\n8"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n9\n10\n11"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n12\n13\n14"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n15\n16\n17"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n18\n19\n20"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "\n21\n22\n23"
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":0,\"duration_ms\":1426,\"is_error\":true,\"num_turns\":2,\"session_id\":\"86c0d192-5490-4683-81d4-5e726b437808\",\"subtype\":\"error_during_execution\",\"terminal_reason\":\"aborted_streaming\",\"total_cost_usd\":0,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"inference_geo\":\"\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{\"thinking_tokens\":0},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "after"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "-interrupt"
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":910,\"duration_ms\":925,\"is_error\":false,\"num_turns\":1,\"session_id\":\"86c0d192-5490-4683-81d4-5e726b437808\",\"subtype\":\"success\",\"terminal_reason\":\"completed\",\"total_cost_usd\":0.0016566,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":171,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":171,\"cache_read_input_tokens\":10996,\"inference_geo\":\"not_available\",\"input_tokens\":10,\"iterations\":[{\"cache_creation\":{\"ephemeral_1h_input_tokens\":171,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":171,\"cache_read_input_tokens\":10996,\"input_tokens\":10,\"output_tokens\":41,\"type\":\"message\"}],\"output_tokens\":41,\"output_tokens_details\":{\"thinking_tokens\":32},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  }
+]

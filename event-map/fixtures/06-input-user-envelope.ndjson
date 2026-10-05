@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":"Set my wallpaper to the dawn scene."}}
+{"type":"control_request","request_id":"req_9f4b1c2a","request":{"subtype":"interrupt"}}

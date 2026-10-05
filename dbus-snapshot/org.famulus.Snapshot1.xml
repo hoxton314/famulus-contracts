@@ -1,0 +1,40 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  Famulus contract C4: org.famulus.Snapshot1
+  Bus:         SYSTEM bus (snapshotting is privileged)
+  Bus name:    org.famulus.Snapshot1
+  Object path: /org/famulus/Snapshot1
+  Normative specification: README.md in this directory.
+-->
+<node>
+  <interface name="org.famulus.Snapshot1">
+    <annotation name="org.gtk.GDBus.DocString"
+                value="Snapshot service for Famulus. Takes read-only btrfs snapshots of managed subvolumes (for example etc and var) before AI-initiated system mutations, records the rpm-ostree deployment digest active at snapshot time, and restores snapshot sets on rollback. One Create call covering multiple subvolumes yields exactly one snapshot_ref, matching the one snapshot_ref field of the C1 audit event that triggered it."/>
+    <method name="Create">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Create read-only btrfs snapshots of each named managed subvolume, as one atomic set. subvolumes is an ordered list of managed btrfs subvolume names (each matching [a-z0-9._-]+); unknown or unmanaged names raise org.famulus.Snapshot1.Error.UnknownSubvolume. tag MUST begin with the lowercase UUIDv7 event_id of the C1 audit event that triggered the snapshot, optionally followed by a dot and a free-form suffix; the UUIDv7 part is embedded in the returned snapshot_ref. The rpm-ostree deployment digest active at snapshot time is recorded in the snapshot metadata. Returns a snapshot_ref of the form famulus-snap/&lt;event_id&gt;/&lt;subvols&gt;@&lt;unix_ts&gt;."/>
+      <arg direction="in" type="as" name="subvolumes"/>
+      <arg direction="in" type="s" name="tag"/>
+      <arg direction="out" type="s" name="snapshot_ref"/>
+    </method>
+    <method name="Restore">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Restore every subvolume in the set identified by snapshot_ref, as an all-or-nothing attempt. Returns true on success; returns false only when the restore was attempted and cleanly rolled back to the pre-restore state. Raises org.famulus.Snapshot1.Error.NotFound for an unknown ref and org.famulus.Snapshot1.Error.Busy if another restore is in flight. A reboot MAY be required for the restore to take full effect."/>
+      <arg direction="in" type="s" name="snapshot_ref"/>
+      <arg direction="out" type="b" name="success"/>
+    </method>
+    <method name="List">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="List all snapshot sets. Each entry carries at least: snapshot_ref (s), event_id (s), subvolumes (as), tag (s), created_unix (t), deployment_digest (s). The a{sv} dictionary is deliberately open; consumers MUST tolerate unknown extra keys."/>
+      <arg direction="out" type="aa{sv}" name="snapshots"/>
+    </method>
+    <method name="Prune">
+      <annotation name="org.gtk.GDBus.DocString"
+                  value="Keep the newest keep_last snapshot sets (ordered by created_unix) and delete all older sets. Returns the number of sets pruned. Snapshot sets referenced by C1 audit records are still prunable; the audit log outlives its snapshots."/>
+      <arg direction="in" type="u" name="keep_last"/>
+      <arg direction="out" type="u" name="pruned_count"/>
+    </method>
+  </interface>
+</node>

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://famulus.dev/contracts/v1/snapshot-ref.schema.json",
+  "title": "Famulus snapshot_ref (contract C4)",
+  "description": "Reference to one snapshot set created by org.famulus.Snapshot1.Create. Format: famulus-snap/<event_id>/<subvols>@<unix_ts>. <event_id> is the lowercase UUIDv7 of the C1 audit event that triggered the snapshot. <subvols> is one or more btrfs subvolume names (each matching [a-z0-9._-]+) joined by \"+\" in the order passed to Create. <unix_ts> is integer seconds since the Unix epoch at snapshot creation time. Example: famulus-snap/019811a2-7c3e-7d10-9b8a-3f2e1d0c4b5a/etc+var@1751884800",
+  "type": "string",
+  "pattern": "^famulus-snap/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[a-z0-9._-]+(\\+[a-z0-9._-]+)*@[0-9]+$"
+}

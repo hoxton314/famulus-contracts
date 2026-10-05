@@ -1,0 +1,56 @@
+[
+  {
+    "signal": "ToolCall",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01WgetWallpaper0000001",
+      "tool_name": "mcp__famulus_desktop__wallpaper_get",
+      "input_json": "{}",
+      "tier": 0
+    }
+  },
+  {
+    "signal": "ToolCall",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01BashOsRelease0000001",
+      "tool_name": "Bash",
+      "input_json": "{\"command\":\"cat /etc/os-release\"}",
+      "tier": 2
+    }
+  },
+  {
+    "signal": "ToolResult",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01WgetWallpaper0000001",
+      "tool_name": "mcp__famulus_desktop__wallpaper_get",
+      "result_json": "[{\"text\":\"file:///usr/share/backgrounds/famulus/dawn.png\",\"type\":\"text\"}]",
+      "is_error": false
+    }
+  },
+  {
+    "signal": "ToolResult",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01BashOsRelease0000001",
+      "tool_name": "Bash",
+      "result_json": "NAME=\"Famulus Linux\"\nVERSION_ID=\"42\"",
+      "is_error": false
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "Your wallpaper is the dawn scene, and you are running Famulus Linux 42."
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":5200,\"duration_ms\":6100,\"is_error\":false,\"num_turns\":2,\"session_id\":\"d4e5f6a7-b8c9-4d0e-9f1a-3b4c5d6e7f80\",\"subtype\":\"success\",\"total_cost_usd\":0.0102,\"usage\":{\"input_tokens\":512,\"output_tokens\":71}}"
+    }
+  }
+]

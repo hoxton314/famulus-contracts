@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://famulus.dev/contracts/v1/manifest.schema.json",
+  "title": "Famulus skill manifest (contract C3)",
+  "description": "Schema for the parsed YAML of a manifest.yaml that ships next to each SKILL.md in a Famulus skill directory. Declares the skill's identity, highest required permission tier, mutation and network behaviour, and the polkit actions and file paths it may use. Consumed by famulus-agentd to enforce the C5 permission policy and to decide when a C4 snapshot is required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "version",
+    "tier",
+    "mutates_system",
+    "polkit_actions",
+    "files_touched",
+    "network_access",
+    "description"
+  ],
+  "properties": {
+    "name": {
+      "description": "Skill identifier in kebab-case: lowercase letters, digits, and hyphens; starts with a letter or digit; at most 63 characters. Must match the skill's directory name in famulus-skills.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "version": {
+      "description": "Skill version as a Semantic Versioning 2.0.0 string (https://semver.org). MUST be written as a quoted YAML string: an unquoted scalar such as 1.0 parses as a float and is rejected.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "tier": {
+      "description": "The HIGHEST permission tier any action of this skill may require: 0 = read-only/no-auth, 1 = user-authenticated, 2 = admin-authenticated. Enforced by famulus-agentd via the C5 permission policy.",
+      "type": "integer",
+      "enum": [0, 1, 2]
+    },
+    "mutates_system": {
+      "description": "True if the skill can mutate system state under /etc or /var. When true, the runtime MUST take a C4 snapshot (org.famulus.Snapshot1) of the affected subvolumes before executing the skill.",
+      "type": "boolean"
+    },
+    "polkit_actions": {
+      "description": "Polkit action IDs under the org.famulus. namespace that the skill may invoke. Unique; may be empty. Tier 0 skills MUST declare none; tier 1 and 2 skills MUST declare at least one.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "description": "A polkit action ID in the org.famulus. namespace, e.g. org.famulus.pkg.install-system.",
+        "type": "string",
+        "pattern": "^org\\.famulus\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+      }
+    },
+    "files_touched": {
+      "description": "Informative declaration of filesystem paths (glob patterns) the skill may write. Unique; may be empty. Audited but not sandbox-enforced in v1.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "description": "A non-empty glob pattern for a path the skill may write, e.g. /var/lib/flatpak/** or ~/.config/dconf/user.",
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "network_access": {
+      "description": "True if the skill may access the network. Declarative and audited, not sandbox-enforced in v1.",
+      "type": "boolean"
+    },
+    "description": {
+      "description": "Human-readable summary of what the skill does, shown in permission prompts and audit tooling. 1 to 500 characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": 0 }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "properties": {
+          "polkit_actions": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": { "enum": [1, 2] }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "properties": {
+          "polkit_actions": { "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mutates_system": { "const": true }
+        },
+        "required": ["mutates_system"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "enum": [1, 2] }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: Apache-2.0
+# Famulus C5 default tier policy — the policy shipped with famulus-agentd.
+# Shape: tier-policy.schema.json; validator: validate_policy.py.
+
+version: 1
+
+# hard_deny is checked FIRST and independently of `rules`: the listed access
+# to these paths is NEVER allowed, regardless of any rule below. These
+# entries protect the audit hash chain and the Anthropic credentials and are
+# a mandatory contract floor — validate_policy.py rejects any policy that
+# drops them.
+hard_deny:
+  - path: "/var/log/famulus/audit/**"
+    access: [write]
+    reason: "primary audit chain location — tamper-proofing"
+  - path: "/var/lib/famulus/audit/**"
+    access: [write]
+    reason: "secondary/archived audit chain files"
+  - path: "~/.claude/.credentials.json"
+    access: [read, write]
+    reason: >-
+      Anthropic credentials — exfiltration and tamper protection (read is
+      denied too; this deliberately exceeds the write-only baseline)
+
+# Rules are ORDERED: evaluated top to bottom, FIRST MATCH WINS.
+rules:
+  # ---- tier 0: read-only / no authentication ----
+  - match: "mcp__famulus_*__get_*"
+    tier: 0
+    behavior: auto-allow
+    reason: "read-only queries"
+  - match: "mcp__famulus_*__list_*"
+    tier: 0
+    behavior: auto-allow
+  - match: "mcp__famulus_*__status*"
+    tier: 0
+    behavior: auto-allow
+  - match: "mcp__famulus_*__wallpaper_*"
+    tier: 0
+    behavior: auto-allow
+  - match: "mcp__famulus_*__app_launch"
+    tier: 0
+    behavior: auto-allow
+  # Read-only claude built-ins; hard_deny above still shields credential paths.
+  - match: "Read"
+    tier: 0
+    behavior: auto-allow
+  - match: "Glob"
+    tier: 0
+    behavior: auto-allow
+  - match: "Grep"
+    tier: 0
+    behavior: auto-allow
+  - match: "WebSearch"
+    tier: 0
+    behavior: prompt
+    reason: "network egress under user control"
+  - match: "WebFetch"
+    tier: 0
+    behavior: prompt
+    reason: "network egress under user control"
+
+  # ---- tier 1: user-authenticated ----
+  # These wifi_* rules sit ABOVE the tier-2 network_* rule, so plain wifi
+  # joins stay at tier 1.
+  - match: "mcp__famulus_*__wifi_*"
+    tier: 1
+    behavior: prompt
+  - match: "mcp__famulus_*__volume_*"
+    tier: 1
+    behavior: prompt
+  - match: "mcp__famulus_*__brightness_*"
+    tier: 1
+    behavior: prompt
+  - match: "mcp__famulus_*__display_*"
+    tier: 1
+    behavior: prompt
+  - match: "mcp__famulus_*__flatpak_user_*"
+    tier: 1
+    behavior: prompt
+  - match: "Write"
+    tier: 1
+    behavior: prompt
+    reason: "writes to user files"
+  - match: "Edit"
+    tier: 1
+    behavior: prompt
+    reason: "writes to user files"
+
+  # ---- tier 2: admin-authenticated, snapshot before mutation ----
+  - match: "mcp__famulus_*__flatpak_system_*"
+    tier: 2
+    behavior: prompt
+    require_snapshot: true
+  - match: "mcp__famulus_*__rpm_ostree_*"
+    tier: 2
+    behavior: prompt
+    require_snapshot: true
+  - match: "mcp__famulus_*__bootc_*"
+    tier: 2
+    behavior: prompt
+    require_snapshot: true
+  # Network reconfiguration; the wifi_* tier-1 rules above match first for
+  # plain wifi joins.
+  - match: "mcp__famulus_*__network_*"
+    tier: 2
+    behavior: prompt
+    require_snapshot: true
+  - match: "Bash"
+    tier: 2
+    behavior: prompt
+    require_snapshot: true
+    reason: "arbitrary shell — assume system mutation"
+
+# Safe default for unknown tools: treat as an admin-level mutation — prompt
+# for admin authentication and snapshot first.
+default_rule:
+  tier: 2
+  behavior: prompt
+  require_snapshot: true

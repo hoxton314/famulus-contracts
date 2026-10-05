@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://famulus.dev/contracts/v1/response-complete.schema.json",
+  "title": "ResponseComplete result_json payload",
+  "description": "Shape of the result_json argument of the org.famulus.Conversation1 ResponseComplete signal (contract C2). Emitted by famulus-agentd once per turn when the supervised claude CLI reports the turn result.",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Session identifier reported by the claude CLI for this conversation."
+    },
+    "total_cost_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total cost of the turn in US dollars as reported by the claude CLI."
+    },
+    "is_error": {
+      "type": "boolean",
+      "description": "True when the turn ended in a per-turn API error; process-level failures use the ConversationError signal instead."
+    },
+    "num_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of agentic turns the CLI executed to produce this response."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional wall-clock duration of the turn in milliseconds."
+    },
+    "duration_api_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional cumulative Anthropic API time for the turn in milliseconds."
+    },
+    "usage": {
+      "type": "object",
+      "description": "Optional free-form token-usage object as reported by the claude CLI."
+    },
+    "subtype": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional passthrough of the CLI result subtype (e.g. success, error_during_execution, error_max_turns). Open set: consumers MUST NOT reject unknown values."
+    },
+    "terminal_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional passthrough of the CLI terminal_reason (e.g. completed; aborted_streaming after Cancel). Open set: consumers MUST NOT reject unknown values."
+    }
+  },
+  "required": ["session_id", "total_cost_usd", "is_error", "num_turns"],
+  "additionalProperties": false
+}

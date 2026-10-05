@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# C3 skill manifest — ships next to SKILL.md in the install-software skill directory.
+# Tier 2: the manifest declares the HIGHEST tier the skill can require.
+name: install-software
+version: "1.0.0"
+tier: 2
+mutates_system: true
+polkit_actions:
+  - "org.famulus.pkg.install-user"
+  - "org.famulus.pkg.install-system"
+files_touched:
+  - "/etc/**"
+  - "/var/lib/flatpak/**"
+  - "/var/lib/rpm-ostree/**"
+  - "~/.local/share/flatpak/**"
+network_access: true
+description: >-
+  Installs software on the system. Per-user installs (flatpak --user) are
+  tier 1 (user-authenticated); system-wide flatpak installs and rpm-ostree
+  package layering are tier 2 (admin-authenticated). A manifest declares the
+  HIGHEST tier the skill can require, so this skill is declared tier 2.
+  Because it mutates /etc and /var, the runtime takes a C4 snapshot before
+  every run.

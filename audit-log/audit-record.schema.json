@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://famulus.dev/contracts/v1/audit-record.schema.json",
+  "title": "Famulus audit-log record (contract C1)",
+  "description": "One record of the append-only, hash-chained NDJSON audit log written by famulus-agentd. Every AI-initiated action is appended as one record. Records are chained via SHA-256 over the canonical JSON serialization; see HASHING.md. Floats are forbidden anywhere in a record (enforced by validators, not by this schema).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts",
+    "event_id",
+    "conversation_id",
+    "actor",
+    "tool",
+    "input_redacted",
+    "decision",
+    "tier",
+    "snapshot_ref",
+    "deployment_before",
+    "result",
+    "prev_hash",
+    "hash"
+  ],
+  "properties": {
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp of the event WITH an explicit UTC offset or Z, e.g. 2026-07-07T14:03:22.114Z. The date-time format annotation is informative only; validators MUST check the timestamp in code and MUST reject timestamps without an explicit offset."
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "description": "UUIDv7 uniquely identifying this audit event, lowercase hex only."
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque non-empty identifier of the conversation this event belongs to, assigned by famulus-agentd (a UUID in practice; the contract constrains only non-emptiness)."
+    },
+    "actor": {
+      "type": "string",
+      "enum": ["agent", "user", "system"],
+      "description": "Who initiated the action: the AI agent, the human user, or the system itself."
+    },
+    "tool": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Tool name exactly as seen by the claude CLI, e.g. \"Bash\" or \"mcp__famulus_desktop__wallpaper_set\"."
+    },
+    "input_redacted": {
+      "type": "object",
+      "description": "The tool input after secret redaction. Free-form object: any properties are allowed inside it. Floats are still forbidden anywhere within (canonical-hashing rule, enforced by validators)."
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["auto-allow", "user-allow", "user-deny", "hook-deny"],
+      "description": "Permission decision for this action. Maps to C5 policy behaviors: auto-allow -> \"auto-allow\"; prompt answered yes -> \"user-allow\"; prompt answered no -> \"user-deny\"; deny rule or hard-deny -> \"hook-deny\"."
+    },
+    "tier": {
+      "type": "integer",
+      "enum": [0, 1, 2],
+      "description": "Permission tier of the action: 0 = read-only/no-auth, 1 = user-authenticated, 2 = admin-authenticated. Carried as uint32 (\"u\") on D-Bus."
+    },
+    "snapshot_ref": {
+      "type": ["string", "null"],
+      "pattern": "^famulus-snap/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[a-z0-9._-]+(\\+[a-z0-9._-]+)*@[0-9]+$",
+      "description": "Reference to the btrfs snapshots taken before this action, in the form famulus-snap/<event_id>/<subvols>@<unix_ts>, e.g. famulus-snap/019811a2-7c3e-7d10-9b8a-3f2e1d0c4b5a/etc+var@1751884800. Null when no snapshot was taken. This field is required; use explicit null."
+    },
+    "deployment_before": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "description": "rpm-ostree deployment digest active before the action, e.g. an ostree commit checksum or a sha256:<hex> image digest (the contract constrains only non-emptiness). Null when not recorded. This field is required; use explicit null."
+    },
+    "result": {
+      "type": "string",
+      "enum": ["ok", "error", "rolled-back"],
+      "description": "Outcome of the action: ok on success, error on failure or denial, rolled-back when the action was undone via snapshot rollback."
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash (lowercase hex) of the previous record in the chain. The first (genesis) record MUST use 64 ASCII \"0\" characters. See HASHING.md."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash (lowercase hex) of this record: SHA256(ascii_bytes(prev_hash) || canonical_json_bytes(record without \"hash\")). See HASHING.md."
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<node>
+  <interface name="org.famulus.Agent1">
+    <annotation name="org.gtk.GDBus.DocString" value="Entry point of famulus-agentd. Exported on the session bus under bus name org.famulus.Agent1 at object path /org/famulus/Agent1. Creates conversation objects and routes permission decisions back to the blocked permission broker."/>
+    <method name="CreateConversation">
+      <annotation name="org.gtk.GDBus.DocString" value="Spawn one supervised claude CLI process and export a new org.famulus.Conversation1 object at /org/famulus/Agent1/conversations/&lt;id&gt;. Returns the object path of the new conversation."/>
+      <arg name="conversation_path" type="o" direction="out"/>
+    </method>
+    <method name="RespondPermission">
+      <annotation name="org.gtk.GDBus.DocString" value="Answer a pending PermissionRequest identified by request_id. behavior is allow or deny. updated_input_json is the empty string to keep the original tool input, or a canonical-JSON object that replaces it (only meaningful with allow). message is a human-readable reason (only meaningful with deny). Raises org.famulus.Agent1.Error.NotFound for an unknown request_id."/>
+      <arg name="request_id" type="s" direction="in"/>
+      <arg name="behavior" type="s" direction="in"/>
+      <arg name="updated_input_json" type="s" direction="in"/>
+      <arg name="message" type="s" direction="in"/>
+    </method>
+    <property name="DaemonVersion" type="s" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="Version string of the running famulus-agentd daemon."/>
+    </property>
+    <property name="CliVersion" type="s" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="Version string of the supervised claude CLI binary."/>
+    </property>
+    <property name="AuthMethod" type="s" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="How the claude CLI is authenticated. One of: oauth, api-key, none."/>
+    </property>
+  </interface>
+</node>
