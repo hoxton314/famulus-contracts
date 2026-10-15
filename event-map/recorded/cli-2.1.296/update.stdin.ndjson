@@ -1,0 +1,1 @@
+{"type":"user","message":{"role":"user","content":"Use the Bash tool to run exactly: echo original > upd.txt . Then say done."}}

@@ -11,6 +11,13 @@ claude -p --input-format stream-json --output-format stream-json --verbose \
 ```
 
 with a stub stdio MCP server standing in for the approval broker.
+`tools/record_cli.py` does all of this and writes `cli-<version>/`; it
+uses haiku and costs a few cents.
+
+| Version | Recorded | Notes |
+|---------|----------|-------|
+| `cli-2.1.284` | 2026-10-04 | basis of contracts-v1 |
+| `cli-2.1.296` | 2026-10-15 | no new stdout types; broker request/reply shape unchanged |
 
 | Scene | What it proves |
 |-------|----------------|
@@ -33,7 +40,18 @@ recording host's own `plugins`, `skills`, `slash_commands`,
 `terminal_slash_commands`, `agents`, `memory_paths` emptied in
 `system/init`; `rate_limit_event` utilization zeroed.
 
-To add a version: record the same five scenes against the new pinned CLI
-into `cli-<version>/`, regenerate `expected/`, and extend
-`test_event_map.py`. A diff in expected emissions between versions is a
+To add a version:
+
+```sh
+tools/record_cli.py                       # writes event-map/recorded/cli-<version>/
+for s in text allow deny update interrupt; do
+  mkdir -p event-map/recorded/cli-<version>/expected
+  .venv/bin/python event-map/map_events.py event-map/recorded/cli-<version>/$s.stdout.ndjson \
+    --turn-id T1 > event-map/recorded/cli-<version>/expected/$s.json
+done
+just validate                             # tests cover every cli-* directory
+```
+
+Adding a recording changes no contract shape, so it ships as a
+fixtures-only patch tag (`contracts-v1.0.<n>`). A diff in expected emissions between versions is a
 contract-relevant CLI change and needs review.

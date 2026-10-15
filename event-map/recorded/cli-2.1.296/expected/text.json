@@ -1,0 +1,30 @@
+[
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "alpha"
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":990,\"duration_ms\":1300,\"is_error\":false,\"num_turns\":1,\"session_id\":\"84a71f83-2725-42fc-b03e-c420ef012179\",\"subtype\":\"success\",\"terminal_reason\":\"completed\",\"total_cost_usd\":0.0011535,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":5754,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":5754,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"global\",\"input_tokens\":2,\"iterations\":[{\"cache_creation\":{\"ephemeral_1h_input_tokens\":5754,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":5754,\"cache_read_input_tokens\":0,\"input_tokens\":2,\"output_tokens\":5,\"type\":\"message\"}],\"output_tokens\":5,\"output_tokens_details\":{\"thinking_tokens\":0},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "beta"
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":1941,\"duration_ms\":964,\"is_error\":false,\"num_turns\":1,\"session_id\":\"84a71f83-2725-42fc-b03e-c420ef012179\",\"subtype\":\"success\",\"terminal_reason\":\"completed\",\"total_cost_usd\":0.00128604,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":381,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":381,\"cache_read_input_tokens\":5414,\"fallback_credit\":null,\"inference_geo\":\"global\",\"input_tokens\":2,\"iterations\":[{\"cache_creation\":{\"ephemeral_1h_input_tokens\":381,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":381,\"cache_read_input_tokens\":5414,\"input_tokens\":2,\"output_tokens\":4,\"type\":\"message\"}],\"output_tokens\":4,\"output_tokens_details\":{\"thinking_tokens\":0},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  }
+]

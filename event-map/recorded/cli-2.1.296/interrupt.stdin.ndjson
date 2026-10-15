@@ -1,0 +1,3 @@
+{"type":"user","message":{"role":"user","content":"Count slowly from 1 to 300, one number per line, no tools."}}
+{"type":"control_request","request_id":"526d9389-7964-40c1-8f69-cf16b5c194ac","request":{"subtype":"interrupt"}}
+{"type":"user","message":{"role":"user","content":"Reply with exactly: after-interrupt"}}
