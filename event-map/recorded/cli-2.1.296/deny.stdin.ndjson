@@ -1,0 +1,1 @@
+{"type":"user","message":{"role":"user","content":"Use the Bash tool to run exactly: echo famulus-deny > deny.txt . If denied, say 'was denied' and stop."}}

@@ -1,0 +1,43 @@
+[
+  {
+    "signal": "ToolCall",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01TjgAwqSeJXAyGV7tQdVtH1",
+      "tool_name": "Bash",
+      "input_json": "{\"command\":\"echo famulus-deny > deny.txt\",\"description\":\"Write famulus-deny to deny.txt in the working directory\"}",
+      "tier": 2
+    }
+  },
+  {
+    "signal": "ToolResult",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01TjgAwqSeJXAyGV7tQdVtH1",
+      "tool_name": "Bash",
+      "result_json": "Denied by Famulus recorder",
+      "is_error": true
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "was"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": " denied"
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":1732,\"duration_ms\":2031,\"is_error\":false,\"num_turns\":2,\"session_id\":\"fe89364d-c542-4534-b8cb-e327dfa1b311\",\"subtype\":\"success\",\"terminal_reason\":\"completed\",\"total_cost_usd\":0.00077744,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":3199,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":3199,\"cache_read_input_tokens\":8524,\"fallback_credit\":null,\"inference_geo\":\"global\",\"input_tokens\":4,\"iterations\":[{\"cache_creation\":{\"ephemeral_1h_input_tokens\":145,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":145,\"cache_read_input_tokens\":5789,\"input_tokens\":2,\"output_tokens\":5,\"type\":\"message\"}],\"output_tokens\":104,\"output_tokens_details\":{\"thinking_tokens\":0},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  }
+]

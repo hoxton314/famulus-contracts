@@ -169,7 +169,7 @@ Run the tests (from the repo root):
 ## Verification status
 
 - **VERIFIED** means observed against a real `claude` binary — currently
-  **2.1.284** (recordings in `recorded/cli-2.1.284/`): all stdout rows, both
+  **2.1.284** and **2.1.296** (recordings in `recorded/cli-<version>/`): all stdout rows, both
   stdin envelopes (user turn, `control_request` interrupt — previously
   inferred from Agent SDK analogy, issue #24594), and the
   `--permission-prompt-tool` request/reply shape (issue #1175).

@@ -1,0 +1,43 @@
+[
+  {
+    "signal": "ToolCall",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01Htv6bVScVYUEgh3E6VEkNx",
+      "tool_name": "Bash",
+      "input_json": "{\"command\":\"echo original > upd.txt\",\"description\":\"Write \\\"original\\\" into upd.txt\"}",
+      "tier": 2
+    }
+  },
+  {
+    "signal": "ToolResult",
+    "args": {
+      "turn_id": "T1",
+      "tool_use_id": "toolu_01Htv6bVScVYUEgh3E6VEkNx",
+      "tool_name": "Bash",
+      "result_json": "(Bash completed with no output)",
+      "is_error": false
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "Done"
+    }
+  },
+  {
+    "signal": "ResponseDelta",
+    "args": {
+      "turn_id": "T1",
+      "text_chunk": "."
+    }
+  },
+  {
+    "signal": "ResponseComplete",
+    "args": {
+      "turn_id": "T1",
+      "result_json": "{\"duration_api_ms\":1639,\"duration_ms\":1893,\"is_error\":false,\"num_turns\":2,\"session_id\":\"93e383d4-f24c-43e6-a359-f62e38d8df90\",\"subtype\":\"success\",\"terminal_reason\":\"completed\",\"total_cost_usd\":0.0007633700000000001,\"usage\":{\"cache_creation\":{\"ephemeral_1h_input_tokens\":3162,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":3162,\"cache_read_input_tokens\":8507,\"fallback_credit\":null,\"inference_geo\":\"global\",\"input_tokens\":4,\"iterations\":[{\"cache_creation\":{\"ephemeral_1h_input_tokens\":125,\"ephemeral_5m_input_tokens\":0},\"cache_creation_input_tokens\":125,\"cache_read_input_tokens\":5772,\"input_tokens\":2,\"output_tokens\":5,\"type\":\"message\"}],\"output_tokens\":91,\"output_tokens_details\":{\"thinking_tokens\":0},\"server_tool_use\":{\"web_fetch_requests\":0,\"web_search_requests\":0},\"service_tier\":\"standard\",\"speed\":\"standard\"}}"
+    }
+  }
+]

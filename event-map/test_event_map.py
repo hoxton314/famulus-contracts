@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 FIXTURES_DIR = HERE / "fixtures"
 EXPECTED_DIR = HERE / "expected"
 RC_SCHEMA_PATH = HERE.parent / "dbus-agent" / "response-complete.schema.json"
-RECORDED_DIR = HERE / "recorded" / "cli-2.1.284"
+RECORDED_DIRS = sorted(p for p in (HERE / "recorded").glob("cli-*") if p.is_dir())
 RECORDED_SCENES = ["text", "allow", "deny", "update", "interrupt"]
 BROKER_SCENES = ["allow", "deny", "update"]
 
@@ -104,7 +104,7 @@ class TestResponseCompleteSchema(unittest.TestCase):
     def test_expected_response_complete_payloads_validate(self):
         import jsonschema
         schema = json.loads(RC_SCHEMA_PATH.read_text(encoding="utf-8"))
-        paths = sorted(EXPECTED_DIR.glob("*.json")) + sorted((RECORDED_DIR / "expected").glob("*.json"))
+        paths = sorted(EXPECTED_DIR.glob("*.json")) + sorted(p for d in RECORDED_DIRS for p in (d / "expected").glob("*.json"))
         for path in paths:
             for emission in json.loads(path.read_text(encoding="utf-8")):
                 if emission["signal"] != "ResponseComplete":
@@ -118,50 +118,65 @@ class TestRecordedCli(unittest.TestCase):
     """Sanitized recordings of the real claude CLI (see recorded/README.md)."""
 
     def test_mapper_matches_recorded_expected(self):
-        for scene in RECORDED_SCENES:
-            with self.subTest(scene=scene):
-                state, emissions = map_events.new_state(), []
-                for obj in load_ndjson(RECORDED_DIR / (scene + ".stdout.ndjson")):
-                    emissions.extend(map_events.map_line(state, obj, "T1"))
-                expected = json.loads((RECORDED_DIR / "expected" / (scene + ".json")).read_text(encoding="utf-8"))
-                self.assertEqual(emissions, expected)
+        self.assertGreaterEqual(len(RECORDED_DIRS), 2)
+        for d in RECORDED_DIRS:
+            with self.subTest(cli=d.name):
+                for scene in RECORDED_SCENES:
+                    with self.subTest(scene=scene):
+                        state, emissions = map_events.new_state(), []
+                        for obj in load_ndjson(d / (scene + ".stdout.ndjson")):
+                            emissions.extend(map_events.map_line(state, obj, "T1"))
+                        expected = json.loads((d / "expected" / (scene + ".json")).read_text(encoding="utf-8"))
+                        self.assertEqual(emissions, expected)
 
     def test_tool_ids_correlate(self):
-        for scene in BROKER_SCENES:
-            with self.subTest(scene=scene):
-                emissions = json.loads((RECORDED_DIR / "expected" / (scene + ".json")).read_text(encoding="utf-8"))
-                calls = {e["args"]["tool_use_id"] for e in emissions if e["signal"] == "ToolCall"}
-                results = {e["args"]["tool_use_id"] for e in emissions if e["signal"] == "ToolResult"}
-                self.assertTrue(calls)
-                self.assertEqual(calls, results)
+        self.assertGreaterEqual(len(RECORDED_DIRS), 2)
+        for d in RECORDED_DIRS:
+            with self.subTest(cli=d.name):
+                for scene in BROKER_SCENES:
+                    with self.subTest(scene=scene):
+                        emissions = json.loads((d / "expected" / (scene + ".json")).read_text(encoding="utf-8"))
+                        calls = {e["args"]["tool_use_id"] for e in emissions if e["signal"] == "ToolCall"}
+                        results = {e["args"]["tool_use_id"] for e in emissions if e["signal"] == "ToolResult"}
+                        self.assertTrue(calls)
+                        self.assertEqual(calls, results)
 
     def test_stdin_envelopes_match_table(self):
-        for scene in RECORDED_SCENES:
-            for obj in load_ndjson(RECORDED_DIR / (scene + ".stdin.ndjson")):
-                with self.subTest(scene=scene):
-                    self.assertIn(obj["type"], INPUT_TYPES)
-                    if obj["type"] == "user":
-                        self.assertEqual(obj["message"]["role"], "user")
-                    else:
-                        self.assertEqual(obj["request"]["subtype"], "interrupt")
+        self.assertGreaterEqual(len(RECORDED_DIRS), 2)
+        for d in RECORDED_DIRS:
+            with self.subTest(cli=d.name):
+                for scene in RECORDED_SCENES:
+                    for obj in load_ndjson(d / (scene + ".stdin.ndjson")):
+                        with self.subTest(scene=scene):
+                            self.assertIn(obj["type"], INPUT_TYPES)
+                            if obj["type"] == "user":
+                                self.assertEqual(obj["message"]["role"], "user")
+                            else:
+                                self.assertEqual(obj["request"]["subtype"], "interrupt")
 
     def test_interrupt_yields_error_result_and_survives(self):
-        results = [o for o in load_ndjson(RECORDED_DIR / "interrupt.stdout.ndjson") if o["type"] == "result"]
-        self.assertEqual([r["is_error"] for r in results], [True, False])
-        acks = [o for o in load_ndjson(RECORDED_DIR / "interrupt.stdout.ndjson") if o["type"] == "control_response"]
-        sent = [o for o in load_ndjson(RECORDED_DIR / "interrupt.stdin.ndjson") if o["type"] == "control_request"]
-        self.assertEqual(acks[0]["response"]["request_id"], sent[0]["request_id"])
+        self.assertGreaterEqual(len(RECORDED_DIRS), 2)
+        for d in RECORDED_DIRS:
+            with self.subTest(cli=d.name):
+                results = [o for o in load_ndjson(d / "interrupt.stdout.ndjson") if o["type"] == "result"]
+                self.assertEqual([r["is_error"] for r in results], [True, False])
+                acks = [o for o in load_ndjson(d / "interrupt.stdout.ndjson") if o["type"] == "control_response"]
+                sent = [o for o in load_ndjson(d / "interrupt.stdin.ndjson") if o["type"] == "control_request"]
+                self.assertEqual(acks[0]["response"]["request_id"], sent[0]["request_id"])
 
     def test_broker_wire_shape(self):
-        for scene in BROKER_SCENES:
-            msgs = [m["msg"] for m in load_ndjson(RECORDED_DIR / (scene + ".broker.ndjson"))]
-            call = next(m for m in msgs if m.get("method") == "tools/call")
-            reply = next(m for m in msgs if m.get("id") == call["id"] and "result" in m)
-            with self.subTest(scene=scene):
-                self.assertEqual(call["params"]["name"], "approve")
-                self.assertEqual(set(call["params"]["arguments"]), {"tool_name", "input", "tool_use_id"})
-                decision = json.loads(reply["result"]["content"][0]["text"])
-                self.assertIn(decision["behavior"], ("allow", "deny"))
+        self.assertGreaterEqual(len(RECORDED_DIRS), 2)
+        for d in RECORDED_DIRS:
+            with self.subTest(cli=d.name):
+                for scene in BROKER_SCENES:
+                    msgs = [m["msg"] for m in load_ndjson(d / (scene + ".broker.ndjson"))]
+                    call = next(m for m in msgs if m.get("method") == "tools/call")
+                    reply = next(m for m in msgs if m.get("id") == call["id"] and "result" in m)
+                    with self.subTest(scene=scene):
+                        self.assertEqual(call["params"]["name"], "approve")
+                        self.assertEqual(set(call["params"]["arguments"]), {"tool_name", "input", "tool_use_id"})
+                        decision = json.loads(reply["result"]["content"][0]["text"])
+                        self.assertIn(decision["behavior"], ("allow", "deny"))
 
 
 if __name__ == "__main__":
