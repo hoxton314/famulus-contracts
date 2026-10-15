@@ -59,6 +59,22 @@ Implementations MUST use these semantics (or a byte-for-byte equivalent);
 `resolve()` in `validate_policy.py` is the reference implementation and
 SHOULD be ported rather than reinvented.
 
+## hard_deny path semantics
+
+`hard_deny` paths are globs over the path a tool call would touch, after
+it is made absolute (relative paths resolve against the CLI's working
+directory) and `.`/`..` are normalized:
+
+- A leading `~` means the home directory of the user the CLI runs as.
+- A trailing `/**` covers the directory itself and everything below it.
+- Otherwise the pattern uses the `fnmatch.fnmatchcase` semantics above,
+  over the whole path, where `*` also matches `/`. A leading `**/` therefore
+  matches the named file in any directory, at any depth: `**/.mcp.json`
+  covers `/home/u/src/project/.mcp.json`.
+
+Implementations MAY deny more than this (for example any shell command
+that mentions a protected path), never less.
+
 ## Evaluation order
 
 1. **`hard_deny`** is checked FIRST and independently of `rules`. It is
@@ -104,10 +120,38 @@ least:
   Anthropic credentials (credential protection per ADR-11). The shipped
   default policy also denies `read` on this file, deliberately exceeding the
   write-only baseline to block exfiltration.
+- Claude Code's own settings files, each with `write` denied (v1.1,
+  ADR-018 item 8):
+  - `**/.claude/settings.json` and `**/.claude/settings.local.json` —
+    project settings. Allow rules there let later tool calls skip the
+    permission-prompt tool (verified live: `"allow": ["Bash"]` in the CLI's
+    working directory let Bash run unprompted), and hooks there run
+    commands without any approval. The CLI's working directory is the
+    conversation directory, which the model can write to.
+  - `~/.claude/settings.json` — the same for user settings.
+  - `**/.mcp.json` and `~/.claude.json` — project and user MCP server
+    declarations. Their servers start with the CLI, without approval
+    (verified live).
+
+  Managed settings that only let managed rules and hooks apply (as
+  famulus-agentd ships them) close the same gap; this floor keeps it
+  closed where the managed file is missing.
 
 `validate_policy.py` rejects any policy missing these entries: a famulus
 policy without them is invalid by contract, even if it is schema-valid.
 
+## Changes
+
+- **contracts-v1.1** (ADR-018 items 6–8), default policy and floor only;
+  the policy format is unchanged (`version: 1`):
+  - `mcp__famulus_*__appearance_*` is tier 0 `auto-allow`, next to
+    `wallpaper_*` (dark mode, accent colour, font size).
+  - `mcp__famulus_*__wifi_*` gains `require_snapshot: true`: joining a
+    network saves a NetworkManager profile under
+    `/etc/NetworkManager/system-connections/`. It stays tier 1.
+  - The hard-deny floor gains the Claude Code settings files listed above;
+    `validate_policy.py` rejects a policy without them.
+
 ## Stability
 
-Frozen at tag contracts-v1. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
+Frozen at tag contracts-v1.1 (first frozen at contracts-v1). Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.

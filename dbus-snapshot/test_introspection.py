@@ -22,6 +22,23 @@ HERE = Path(__file__).resolve().parent
 XML_PATH = HERE / "org.famulus.Snapshot1.xml"
 SCHEMA_PATH = HERE / "snapshot-ref.schema.json"
 VALIDATOR_PATH = HERE / "validate_snapshot_contract.py"
+README_PATH = HERE / "README.md"
+
+# Every D-Bus error C4 names (v1.1 added NotAuthorized and Failed).
+EXPECTED_ERRORS = [
+    "UnknownSubvolume", "InvalidTag", "NotFound", "Busy",
+    "NotAuthorized", "Failed",
+]
+# REQUIRED List keys and their variant types (v1.1 added excluded).
+EXPECTED_LIST_KEYS = {
+    "snapshot_ref": "s",
+    "event_id": "s",
+    "subvolumes": "as",
+    "tag": "s",
+    "created_unix": "t",
+    "deployment_digest": "s",
+    "excluded": "a{sas}",
+}
 
 DOCTYPE_PREFIX = (
     '<!DOCTYPE node PUBLIC '
@@ -134,6 +151,33 @@ class TestIntrospectionXml(unittest.TestCase):
             capture_output=True, text=True,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
+
+
+class TestReadmeSpec(unittest.TestCase):
+    """The normative tables in README.md name every error and List key."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.readme = README_PATH.read_text(encoding="utf-8")
+        cls.xml = XML_PATH.read_text(encoding="utf-8")
+
+    def test_errors_table(self):
+        rows = re.findall(r"^\| `org\.famulus\.Snapshot1\.Error\.(\w+)` \|",
+                          self.readme, re.M)
+        self.assertEqual(rows, EXPECTED_ERRORS)
+        for name in ("NotAuthorized", "Failed"):
+            self.assertIn(f"org.famulus.Snapshot1.Error.{name}", self.xml)
+
+    def test_list_keys_table(self):
+        section = self.readme.split("\n## List\n", 1)[1].split("\n## ", 1)[0]
+        rows = dict(re.findall(r"^\| `(\w+)` \| `([^`]+)` \|", section, re.M))
+        self.assertEqual(rows, EXPECTED_LIST_KEYS)
+        self.assertIn("excluded (a{sas}", self.xml)
+
+    def test_audit_log_never_restored(self):
+        for path in ("/var/log/famulus/audit/", "/var/lib/famulus/audit/"):
+            self.assertIn(path, self.readme)
+        self.assertIn("The audit log MUST NOT be part of a snapshot set", self.readme)
 
 
 class TestSnapshotRefSchema(unittest.TestCase):

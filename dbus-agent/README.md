@@ -97,7 +97,8 @@ invocation finished. `result_json` is the canonical-JSON tool result;
 permission broker needs a user decision for a tool call. `turn_id` is the
 in-flight turn; `tool_use_id` matches the preceding `ToolCall`. The broker's
 reply to the CLI stays blocked until `RespondPermission` is called with this
-`request_id` or the request times out (see below).
+`request_id` or the request times out (see below). Until it is settled, the
+request is also listed in the `PendingPermissions` property.
 
 **`PermissionResolved(s request_id, s behavior)`** — a pending request was
 settled, by any client's `RespondPermission` or by timeout (`behavior` is
@@ -116,7 +117,7 @@ After `ConversationError`, the conversation object may no longer be usable.
 
 ## Properties (Conversation1)
 
-All three emit `org.freedesktop.DBus.Properties.PropertiesChanged` when they
+All four emit `org.freedesktop.DBus.Properties.PropertiesChanged` when they
 change.
 
 - **`Id` (s)** — stable conversation id: the last path element and the
@@ -125,6 +126,11 @@ change.
   the CLI has reported one.
 - **`Busy` (b)** — true from `SendMessage` until the matching
   `ResponseComplete` or `ConversationError`.
+- **`PendingPermissions` (a(sssssu))** (v1.1) — the conversation's permission
+  requests that are not settled yet, oldest first. Each entry is
+  `(request_id, turn_id, tool_use_id, tool_name, input_json, tier)`, with
+  the same values the `PermissionRequest` signal carried. See
+  [Late clients](#late-clients-pendingpermissions).
 
 ## Permission flow
 
@@ -150,6 +156,62 @@ specified (and verified against the real CLI) in C6.
 - `RespondPermission` for a `request_id` that was already settled MUST fail
   with `org.famulus.Agent1.Error.NotFound` (first answer wins).
 
+### Authenticated approvals (v1.1)
+
+Tier 1 means user-authenticated and tier 2 admin-authenticated (C5), so an
+`"allow"` of a tier-1 or tier-2 request is not settled by the call alone:
+
+- The daemon MUST authenticate the process that called `RespondPermission`
+  with polkit before the `"allow"` counts. famulus-agentd checks the
+  actions `org.famulus.agent.approve-tier1` and
+  `org.famulus.agent.approve-tier2`; polkit's agent (GNOME Shell) asks for
+  the password.
+- `RespondPermission` returns before that authentication finishes, so a
+  slow password entry cannot time the call out. A successful return means
+  only that the answer was accepted, not that the request is allowed.
+- The outcome arrives only as `PermissionResolved`. A failed or cancelled
+  authentication, or one the daemon cannot run, settles the request as
+  `"deny"`. Clients MUST rely on `PermissionResolved`, never on the return
+  of `RespondPermission`.
+- While the authentication runs, the request stays pending: a `"deny"` from
+  any client still settles it (first answer wins), and another `"allow"`
+  fails with `org.famulus.Agent1.Error.Failed`.
+- For a tier-1 or tier-2 request `updated_input_json` MUST be `""`. The
+  password authorizes the input the user was shown, so an approval cannot
+  swap in another input. Any other value fails with
+  `org.famulus.Agent1.Error.Failed`, and the request stays pending.
+- A `"deny"` and an `"allow"` of a tier-0 request need no authentication and
+  settle the request at once; `updated_input_json` keeps its v1 meaning
+  there.
+
+The daemon MAY refuse answers from processes that cannot speak for the
+user with `org.famulus.Agent1.Error.Failed`; famulus-agentd refuses every
+process started by the supervised CLI, so a tool call cannot approve its
+own request.
+
+### Late clients: PendingPermissions
+
+`PermissionRequest` is a signal: a client that starts or subscribes after
+it was emitted never sees it. Examples are the chat app opened from the
+Shell panel's notification and the panel after a Shell restart. The
+`PendingPermissions` property closes that gap:
+
+- The daemon MUST add a request to `PendingPermissions` before it emits the
+  request's `PermissionRequest`, and MUST remove it before it emits the
+  request's `PermissionResolved`. Every change emits `PropertiesChanged`.
+- A request whose authentication is still running is still pending and
+  stays listed.
+- `PendingPermissions` is never persisted: pending requests do not outlive
+  the daemon, so after a daemon start the property is empty.
+- `GetManagedObjects` on the ObjectManager delivers the property with the
+  other properties of each conversation.
+- A late client SHOULD subscribe to the signals first and then read the
+  property, de-duplicating by `request_id`. It answers listed requests with
+  `RespondPermission` exactly as if it had seen the signal.
+
+The property is additive: a client written against contracts-v1 ignores
+it.
+
 ## ResponseComplete payload
 
 The `result_json` string of `ResponseComplete` MUST parse as JSON and validate
@@ -163,11 +225,22 @@ CLI `result` line). No other keys are permitted.
 
 Methods on both interfaces MUST fail only with these D-Bus error names:
 
-- `org.famulus.Agent1.Error.Failed` — generic failure.
+- `org.famulus.Agent1.Error.Failed` — generic failure. Among others:
+  malformed `behavior` or `updated_input_json`, a non-empty
+  `updated_input_json` for a tier-1 or tier-2 request, a second `"allow"`
+  while one is being authenticated, an answer from a process that cannot
+  speak for the user.
 - `org.famulus.Agent1.Error.Closed` — the conversation is already closed.
-- `org.famulus.Agent1.Error.NotFound` — unknown `request_id` passed to
-  `RespondPermission`.
+- `org.famulus.Agent1.Error.NotFound` — unknown or already settled
+  `request_id` passed to `RespondPermission`.
+
+## Changes
+
+- **contracts-v1.1** (ADR-018 items 4 and 5): documents authenticated
+  approvals of tier-1/2 requests and the refusal of `updated_input_json`
+  for them; adds the `PendingPermissions` property to `Conversation1`.
+  Additive: no existing member changed its signature.
 
 ## Stability
 
-Frozen at tag contracts-v1. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
+Frozen at tag contracts-v1.1 (first frozen at contracts-v1). Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.

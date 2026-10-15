@@ -162,17 +162,44 @@ record is completed after `Create` returns.
 
 - Accepts a full `snapshot_ref`.
 - `Restore` MUST restore EVERY subvolume in the set as an all-or-nothing
-  attempt; it MUST NOT leave a partially restored system on failure.
+  attempt; it MUST NOT leave a partially restored system on failure
+  (the one case it cannot guarantee is described under `Failed` below).
 - Returns `true` on success.
 - Returns `false` ONLY when the restore was attempted and cleanly rolled
   back to the pre-restore state.
 - MUST raise `org.famulus.Snapshot1.Error.NotFound` for an unknown ref.
 - MUST raise `org.famulus.Snapshot1.Error.Busy` if another restore is in
   flight.
+- MUST raise `org.famulus.Snapshot1.Error.Failed` when it refuses the
+  restore before touching anything (for example because the set was taken
+  on another base deployment), and when the restore failed and the
+  rollback to the pre-restore state failed too. In that last case the
+  service MUST keep what it needs for manual recovery and say so in the
+  error message.
 - A reboot MAY be required for the restore to take full effect:
   snapshots swap at the btrfs subvolume level, and processes holding the
   old subvolume mounted keep seeing pre-restore content until remount or
   reboot.
+
+### What a restore reaches (v1.1)
+
+A restore brings back system state, not the record of what happened. The
+C1 audit log must outlive every rollback: C1's hash chain and C7's
+external anchors are the evidence of the change being undone.
+
+- The audit log MUST NOT be part of a snapshot set and MUST NOT be
+  touched by `Restore`: neither the C7 chains under
+  `/var/log/famulus/audit/` nor the anchors under `/var/lib/famulus/audit/`
+  are copied by `Create`, overwritten, deleted or rolled back.
+- A service MAY exclude further paths, and SHOULD exclude its own
+  snapshot store. The reference implementation (famulus-snapshotd) also
+  excludes users' homes, container storage, `/var/tmp`, `/var/cache`, all
+  of `/var/log`, and live runtime state such as `/var/lib/systemd`.
+- An excluded path covers everything below it. `Restore` leaves excluded
+  paths in the live system exactly as they are: not overwritten, not
+  deleted, not rolled back.
+- Every set MUST report its exclusions in `List` as the `excluded` key,
+  so that a client can tell the user what a restore will not bring back.
 
 ## List
 
@@ -189,6 +216,28 @@ with the given D-Bus variant types:
 | `tag` | `s` | The full `tag` string as passed to `Create` |
 | `created_unix` | `t` | Creation time, integer seconds since the Unix epoch |
 | `deployment_digest` | `s` | rpm-ostree deployment digest recorded at Create time |
+| `excluded` | `a{sas}` | Per subvolume in the set, the absolute live paths the set does not contain and `Restore` never touches (v1.1) |
+
+`excluded` has one entry per subvolume of the set, keyed by subvolume
+name; a subvolume without exclusions maps to an empty array. It lists
+every exclusion that applies to the set: the service's fixed ones and any
+decided at `Create` time. A service implementing contracts-v1 may not send
+it; consumers MUST treat a missing `excluded` as "unknown", never as
+"nothing excluded".
+
+Example entry (`excluded` shortened):
+
+```
+{
+  "snapshot_ref": <"famulus-snap/019811a2-7c3e-7d10-9b8a-3f2e1d0c4b5a/etc+var@1751884800">,
+  "event_id": <"019811a2-7c3e-7d10-9b8a-3f2e1d0c4b5a">,
+  "subvolumes": <["etc", "var"]>,
+  "tag": <"019811a2-7c3e-7d10-9b8a-3f2e1d0c4b5a.pre-flatpak-install">,
+  "created_unix": <uint64 1751884800>,
+  "deployment_digest": <"sha256:2f1c…">,
+  "excluded": <{"etc": [], "var": ["/var/log", "/var/log/famulus/audit", "/var/lib/famulus/audit", "/var/lib/famulus/snapshots", "/var/home"]}>
+}
+```
 
 Producers MAY add extra keys; consumers MUST tolerate unknown extra keys.
 The `a{sv}` dictionary is open by design — this is the ONE deliberately
@@ -223,7 +272,22 @@ non-emptiness; the contract deliberately does not over-constrain it.
 | `org.famulus.Snapshot1.Error.InvalidTag` | `Create` | `tag` does not begin with a lowercase UUIDv7 |
 | `org.famulus.Snapshot1.Error.NotFound` | `Restore` | The `snapshot_ref` does not name an existing set |
 | `org.famulus.Snapshot1.Error.Busy` | `Restore` | Another restore is already in flight |
+| `org.famulus.Snapshot1.Error.NotAuthorized` | any method | polkit refused the caller, or the authorization could not be checked (v1.1) |
+| `org.famulus.Snapshot1.Error.Failed` | any method | Any other failure: an I/O error, or a refused precondition such as a restore onto another base deployment (v1.1) |
+
+`NotAuthorized` and `Failed` are distinct so that a client can tell "not
+allowed" from "broken". A service MUST NOT report an authorization refusal
+as `Failed`, nor a failure as `NotAuthorized`. The standard
+`org.freedesktop.DBus.Error.*` errors (for example a malformed call) can
+still occur, as on any D-Bus service.
+
+## Changes
+
+- **contracts-v1.1** (ADR-018 items 1 and 2): names the
+  `NotAuthorized` and `Failed` errors; defines what a restore reaches (the
+  audit log never) and adds the `excluded` key to `List`. Additive: no
+  method signature changed.
 
 ## Stability
 
-Frozen at tag contracts-v1. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
+Frozen at tag contracts-v1.1 (first frozen at contracts-v1). Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
