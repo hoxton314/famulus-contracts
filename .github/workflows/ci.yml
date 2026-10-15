@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: Apache-2.0
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["contracts-v*"]
+  workflow_dispatch:
+
+jobs:
+  # The Phase 0 gate: meta-schema checks, every contract's validator and tests.
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - run: just validate
+
+  # The runtime files famulus-image installs (W1.E1.T2): default C5 policy
+  # and D-Bus interface XML, built on the image's base.
+  rpm:
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:44
+    steps:
+      - run: dnf -y install --setopt=install_weak_deps=False git rpm-build rpmlint python3-pyyaml python3-jsonschema tar
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          version=$(sed -n 's/^Version: *//p' packaging/famulus-contracts.spec)
+          git config --global --add safe.directory "$PWD"
+          mkdir -p ~/rpmbuild/SOURCES
+          git archive --format=tar.gz --prefix=famulus-contracts-$version/ \
+            -o ~/rpmbuild/SOURCES/famulus-contracts-$version.tar.gz HEAD
+          rpmbuild -ba packaging/famulus-contracts.spec
+      - name: Inspect and lint
+        run: |
+          rpm=$(ls ~/rpmbuild/RPMS/noarch/famulus-contracts-*.rpm)
+          rpm -qlp "$rpm"
+          rpmlint packaging/famulus-contracts.spec "$rpm"
+          rpm -qlp "$rpm" | grep -qx /usr/share/famulus/tier-policy.yaml
+          mkdir -p dist && cp "$rpm" ~/rpmbuild/SRPMS/*.src.rpm dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: dist/
