@@ -17,10 +17,9 @@ BuildRequires:  python3-jsonschema
 
 %description
 The definitions every Famulus component builds against, as installed
-files: the default permission and tier policy (contract C5) at
-/usr/share/famulus/tier-policy.yaml, and the D-Bus introspection XML of
-org.famulus.Agent1, Conversation1, Snapshot1 and Audit1 (C2, C4, C7) in
-/usr/share/dbus-1/interfaces.
+files: the default permission and tier policy (contract C5) that the
+Famulus session daemon reads, and the D-Bus introspection files of the
+Agent1, Conversation1, Snapshot1 and Audit1 interfaces (C2, C4, C7).
 
 %prep
 %autosetup
