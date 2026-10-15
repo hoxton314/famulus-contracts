@@ -77,10 +77,20 @@ class TestResolve(unittest.TestCase):
         self.assertEqual(rule["behavior"], "auto-allow")
         self.assertEqual(rule["match"], "mcp__famulus_*__wallpaper_*")
 
-    def test_wifi_connect_is_tier1_prompt(self):
+    def test_appearance_is_tier0_auto_allow(self):
+        # ADR-018 item 6: dark mode etc. must not fall through to tier 2.
+        rule = self.resolve("mcp__famulus_desktop__appearance_set_color_scheme")
+        self.assertEqual(rule["match"], "mcp__famulus_*__appearance_*")
+        self.assertEqual(rule["tier"], 0)
+        self.assertEqual(rule["behavior"], "auto-allow")
+        self.assertFalse(rule.get("require_snapshot", False))
+
+    def test_wifi_connect_is_tier1_prompt_with_snapshot(self):
+        # ADR-018 item 7: a join saves a system connection profile.
         rule = self.resolve("mcp__famulus_net__wifi_connect")
         self.assertEqual(rule["tier"], 1)
         self.assertEqual(rule["behavior"], "prompt")
+        self.assertTrue(rule.get("require_snapshot", False))
 
     def test_rpm_ostree_install_is_tier2_prompt_with_snapshot(self):
         rule = self.resolve("mcp__famulus_pkg__rpm_ostree_install")
@@ -121,6 +131,41 @@ class TestResolve(unittest.TestCase):
         self.assertTrue(rule.get("require_snapshot", False))
 
 
+class TestHardDenyPaths(unittest.TestCase):
+    """The '**/' entries reach the file in any directory (README semantics)."""
+
+    def setUp(self):
+        self.paths = {e["path"] for e in load_policy()["hard_deny"]}
+
+    def denied(self, path):
+        home = "/home/u"
+        return any(
+            fnmatch.fnmatchcase(path, p.replace("~", home, 1) if p.startswith("~/") else p)
+            for p in self.paths
+        )
+
+    def test_settings_files_in_any_directory(self):
+        for path in (
+            "/home/u/.local/share/famulus/conversations/c1/.claude/settings.local.json",
+            "/home/u/.local/share/famulus/conversations/c1/.claude/settings.json",
+            "/home/u/.local/share/famulus/conversations/c1/.mcp.json",
+            "/home/u/src/project/.mcp.json",
+            "/home/u/.claude/settings.json",
+            "/home/u/.claude.json",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(self.denied(path))
+
+    def test_similar_names_not_denied(self):
+        for path in (
+            "/home/u/notes/settings.json",
+            "/home/u/.claude/settings.json.bak",
+            "/home/u/project/mcp.json",
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(self.denied(path))
+
+
 class TestNegatives(unittest.TestCase):
     def setUp(self):
         self.schema = load_schema()
@@ -152,6 +197,31 @@ class TestNegatives(unittest.TestCase):
         self.assertTrue(
             any("/var/log/famulus/audit/**" in e for e in errs), errs
         )
+
+    def test_missing_settings_hard_deny_fails(self):
+        # ADR-018 item 8: every Claude Code settings entry is floor.
+        for path in (
+            "**/.claude/settings.json",
+            "**/.claude/settings.local.json",
+            "~/.claude/settings.json",
+            "**/.mcp.json",
+            "~/.claude.json",
+        ):
+            with self.subTest(path=path):
+                bad = copy.deepcopy(self.policy)
+                bad["hard_deny"] = [
+                    entry for entry in bad["hard_deny"] if entry["path"] != path
+                ]
+                errs = self.errors(bad)
+                self.assertTrue(any(repr(path) in e for e in errs), errs)
+
+    def test_settings_hard_deny_read_only_fails(self):
+        bad = copy.deepcopy(self.policy)
+        for entry in bad["hard_deny"]:
+            if entry["path"] == "**/.mcp.json":
+                entry["access"] = ["read"]
+        errs = self.errors(bad)
+        self.assertTrue(any("'**/.mcp.json'" in e for e in errs), errs)
 
     def test_auto_allow_at_tier1_fails(self):
         bad = copy.deepcopy(self.policy)

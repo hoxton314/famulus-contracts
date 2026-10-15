@@ -3,7 +3,7 @@
 # C5 policy (read by famulus-agentd and its PreToolUse hook) and the D-Bus
 # interface definitions (C2, C4, C7). Built from a contracts-v* tag.
 Name:           famulus-contracts
-Version:        1
+Version:        1.1
 Release:        1%{?dist}
 Summary:        Famulus interface contracts: default permission policy and D-Bus interfaces
 License:        Apache-2.0
@@ -45,5 +45,8 @@ python3 tier-policy/validate_policy.py %{buildroot}%{_datadir}/famulus/tier-poli
 %{_datadir}/dbus-1/interfaces/org.famulus.*.xml
 
 %changelog
+* Fri Oct 16 2026 Famulus maintainers <noreply@famulus.dev> - 1.1-1
+- Package the contracts-v1.1 runtime files (ADR-018).
+
 * Thu Oct 15 2026 Famulus maintainers <noreply@famulus.dev> - 1-1
 - Package the contracts-v1 runtime files.

@@ -105,6 +105,7 @@ EXPECTED_CONVERSATION1 = {
         "Id": ("s", "read"),
         "SessionId": ("s", "read"),
         "Busy": ("b", "read"),
+        "PendingPermissions": ("a(sssssu)", "read"),
     },
 }
 
@@ -179,6 +180,16 @@ class StructuralLockTest(unittest.TestCase):
     def test_conversation1_complete_shape(self):
         shape = interface_shape(single_interface(CONVERSATION_XML))
         self.assertEqual(shape, EXPECTED_CONVERSATION1)
+
+    def test_pending_permissions_mirrors_permission_request(self):
+        # One PendingPermissions entry carries exactly the PermissionRequest
+        # signal's arguments, in the same order (ADR-018 item 5).
+        signal = EXPECTED_CONVERSATION1["signals"]["PermissionRequest"]
+        entry = "".join(dbus_type for _, dbus_type in signal)
+        self.assertEqual(
+            EXPECTED_CONVERSATION1["properties"]["PendingPermissions"],
+            (f"a({entry})", "read"),
+        )
 
 
 class GDBusCodegenTest(unittest.TestCase):

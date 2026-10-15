@@ -9,7 +9,7 @@
       <arg name="conversation_path" type="o" direction="out"/>
     </method>
     <method name="RespondPermission">
-      <annotation name="org.gtk.GDBus.DocString" value="Answer a pending PermissionRequest identified by request_id. behavior is allow or deny. updated_input_json is the empty string to keep the original tool input, or a canonical-JSON object that replaces it (only meaningful with allow). message is a human-readable reason (only meaningful with deny). Raises org.famulus.Agent1.Error.NotFound for an unknown request_id."/>
+      <annotation name="org.gtk.GDBus.DocString" value="Answer a pending PermissionRequest identified by request_id. behavior is allow or deny. updated_input_json is the empty string to keep the original tool input, or a canonical-JSON object that replaces it (only meaningful with allow). message is a human-readable reason (only meaningful with deny). Raises org.famulus.Agent1.Error.NotFound for an unknown or already settled request_id. An allow of a tier-1 or tier-2 request counts only after polkit has authenticated the answering process; this call returns before that authentication finishes, a failed or cancelled authentication settles the request as deny, and the outcome is reported only by the PermissionResolved signal. For tier-1 and tier-2 requests updated_input_json MUST be the empty string; any other value raises org.famulus.Agent1.Error.Failed and leaves the request pending."/>
       <arg name="request_id" type="s" direction="in"/>
       <arg name="behavior" type="s" direction="in"/>
       <arg name="updated_input_json" type="s" direction="in"/>

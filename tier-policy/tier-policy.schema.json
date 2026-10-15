@@ -8,7 +8,7 @@
   "required": ["version", "default_rule", "hard_deny", "rules"],
   "properties": {
     "version": {
-      "description": "Policy format version. This contract (contracts-v1) defines exactly version 1.",
+      "description": "Policy format version. This contract (contracts-v1, unchanged in contracts-v1.1) defines exactly version 1.",
       "type": "integer",
       "const": 1
     },

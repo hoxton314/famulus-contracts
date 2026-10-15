@@ -25,7 +25,7 @@ RFC 2119.
 | `map_events.py` | Reference mapper — an executable specification of the table, not runtime code |
 | `fixtures/*.ndjson` | Synthetic stream-json scenes (`01`–`05` stdout direction, `06` stdin direction) |
 | `fixtures/README.md` | Fixture inventory and provenance notes |
-| `recorded/cli-2.1.284/` | Sanitized recordings of the real `claude` 2.1.284 (stdout, stdin, broker MCP exchange) + expected emissions — see `recorded/README.md` |
+| `recorded/cli-<version>/` | Sanitized recordings of the real `claude` CLI, 2.1.284 and 2.1.296 (stdout, stdin, broker MCP exchange) + expected emissions — see `recorded/README.md` |
 | `expected/*.json` | For each stdout fixture, the exact ordered D-Bus signal emissions |
 | `test_event_map.py` | Unit tests binding fixtures, expected emissions, and the reference mapper together |
 
@@ -98,9 +98,12 @@ s input_json, u tier)` signal has **no row in the table above because it has no 
 source**. It originates out-of-band from the
 `mcp__famulus_broker__approve` MCP tool call: when the CLI needs permission,
 it invokes that tool (per `--permission-prompt-tool`); the broker forwards
-the request to famulus-agentd, which emits `PermissionRequest` and blocks
-the MCP reply until C2 `RespondPermission` is called (or the request times
-out), then emits `PermissionResolved(request_id, behavior)`.
+the request to famulus-agentd, which lists it in C2 `PendingPermissions`,
+emits `PermissionRequest` and blocks the MCP reply until C2
+`RespondPermission` settles it (or the request times out), then removes it
+from `PendingPermissions` and emits `PermissionResolved(request_id,
+behavior)`. For a tier-1/2 request, an `allow` settles it only after polkit
+authentication (C2, "Authenticated approvals").
 
 Broker wire shape (VERIFIED against CLI 2.1.284, `recorded/cli-2.1.284/*.broker.ndjson`;
 Anthropic documents this only for the SDK, issue #1175):
@@ -118,7 +121,9 @@ Anthropic documents this only for the SDK, issue #1175):
 ```
 
 `updatedInput` replaces the tool input verbatim (verified: a rewritten Bash
-`command` is what runs). A deny surfaces on stdout as a `tool_result` with
+`command` is what runs). Since contracts-v1.1, C2 accepts a changed input
+only for tier-0 requests; for tier-1/2 requests the daemon always replies
+with the original input. A deny surfaces on stdout as a `tool_result` with
 `is_error: true` and `content` equal to `message`, and in the turn's
 `result.permission_denials`.
 
@@ -183,4 +188,6 @@ Run the tests (from the repo root):
 
 ## Stability
 
-Frozen at tag contracts-v1. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
+Frozen at tag contracts-v1.1 (first frozen at contracts-v1; contracts-v1.0.1
+added the 2.1.296 recordings; v1.1 changed only the prose above, no mapping
+row). Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.

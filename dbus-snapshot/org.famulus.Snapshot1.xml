@@ -11,7 +11,7 @@
 <node>
   <interface name="org.famulus.Snapshot1">
     <annotation name="org.gtk.GDBus.DocString"
-                value="Snapshot service for Famulus. Takes read-only btrfs snapshots of managed subvolumes (for example etc and var) before AI-initiated system mutations, records the rpm-ostree deployment digest active at snapshot time, and restores snapshot sets on rollback. One Create call covering multiple subvolumes yields exactly one snapshot_ref, matching the one snapshot_ref field of the C1 audit event that triggered it."/>
+                value="Snapshot service for Famulus. Takes read-only btrfs snapshots of managed subvolumes (for example etc and var) before AI-initiated system mutations, records the rpm-ostree deployment digest active at snapshot time, and restores snapshot sets on rollback. Besides the per-method errors, every method MAY raise org.famulus.Snapshot1.Error.NotAuthorized (polkit refused the caller) and org.famulus.Snapshot1.Error.Failed (any other failure, such as an I/O error). One Create call covering multiple subvolumes yields exactly one snapshot_ref, matching the one snapshot_ref field of the C1 audit event that triggered it."/>
     <method name="Create">
       <annotation name="org.gtk.GDBus.DocString"
                   value="Create read-only btrfs snapshots of each named managed subvolume, as one atomic set. subvolumes is an ordered list of managed btrfs subvolume names (each matching [a-z0-9._-]+); unknown or unmanaged names raise org.famulus.Snapshot1.Error.UnknownSubvolume. tag MUST begin with the lowercase UUIDv7 event_id of the C1 audit event that triggered the snapshot, optionally followed by a dot and a free-form suffix; the UUIDv7 part is embedded in the returned snapshot_ref. The rpm-ostree deployment digest active at snapshot time is recorded in the snapshot metadata. Returns a snapshot_ref of the form famulus-snap/&lt;event_id&gt;/&lt;subvols&gt;@&lt;unix_ts&gt;."/>
@@ -21,13 +21,13 @@
     </method>
     <method name="Restore">
       <annotation name="org.gtk.GDBus.DocString"
-                  value="Restore every subvolume in the set identified by snapshot_ref, as an all-or-nothing attempt. Returns true on success; returns false only when the restore was attempted and cleanly rolled back to the pre-restore state. Raises org.famulus.Snapshot1.Error.NotFound for an unknown ref and org.famulus.Snapshot1.Error.Busy if another restore is in flight. A reboot MAY be required for the restore to take full effect."/>
+                  value="Restore every subvolume in the set identified by snapshot_ref, as an all-or-nothing attempt. Returns true on success; returns false only when the restore was attempted and cleanly rolled back to the pre-restore state. Raises org.famulus.Snapshot1.Error.NotFound for an unknown ref and org.famulus.Snapshot1.Error.Busy if another restore is in flight. The audit log (C1, C7) is never part of a restore; paths excluded from a set are left untouched and are reported in List as excluded. A reboot MAY be required for the restore to take full effect."/>
       <arg direction="in" type="s" name="snapshot_ref"/>
       <arg direction="out" type="b" name="success"/>
     </method>
     <method name="List">
       <annotation name="org.gtk.GDBus.DocString"
-                  value="List all snapshot sets. Each entry carries at least: snapshot_ref (s), event_id (s), subvolumes (as), tag (s), created_unix (t), deployment_digest (s). The a{sv} dictionary is deliberately open; consumers MUST tolerate unknown extra keys."/>
+                  value="List all snapshot sets. Each entry carries at least: snapshot_ref (s), event_id (s), subvolumes (as), tag (s), created_unix (t), deployment_digest (s), excluded (a{sas}: per subvolume, the absolute paths this set never restores). The a{sv} dictionary is deliberately open; consumers MUST tolerate unknown extra keys."/>
       <arg direction="out" type="aa{sv}" name="snapshots"/>
     </method>
     <method name="Prune">

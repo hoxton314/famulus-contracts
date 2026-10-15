@@ -41,7 +41,7 @@
       <arg name="is_error" type="b"/>
     </signal>
     <signal name="PermissionRequest">
-      <annotation name="org.gtk.GDBus.DocString" value="The permission broker needs a decision for a tool call. turn_id is the in-flight turn; tool_use_id matches the ToolCall being gated. The broker reply to the CLI is blocked until RespondPermission(request_id, ...) is called on org.famulus.Agent1 or the request times out as deny."/>
+      <annotation name="org.gtk.GDBus.DocString" value="The permission broker needs a decision for a tool call. turn_id is the in-flight turn; tool_use_id matches the ToolCall being gated. The broker reply to the CLI is blocked until RespondPermission(request_id, ...) is called on org.famulus.Agent1 or the request times out as deny. The request is also listed in the PendingPermissions property until it is settled."/>
       <arg name="request_id" type="s"/>
       <arg name="turn_id" type="s"/>
       <arg name="tool_use_id" type="s"/>
@@ -71,6 +71,9 @@
     </property>
     <property name="Busy" type="b" access="read">
       <annotation name="org.gtk.GDBus.DocString" value="True from SendMessage until the matching ResponseComplete or ConversationError. Emits PropertiesChanged."/>
+    </property>
+    <property name="PendingPermissions" type="a(sssssu)" access="read">
+      <annotation name="org.gtk.GDBus.DocString" value="The permission requests of this conversation that are not settled yet, oldest first, so that a client starting after a PermissionRequest was emitted can still answer it. Each entry is (request_id, turn_id, tool_use_id, tool_name, input_json, tier), with the same values as the PermissionRequest signal. A request is added before its PermissionRequest signal is emitted and removed before its PermissionResolved signal is emitted. Emits PropertiesChanged."/>
     </property>
   </interface>
 </node>

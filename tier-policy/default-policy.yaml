@@ -6,9 +6,9 @@ version: 1
 
 # hard_deny is checked FIRST and independently of `rules`: the listed access
 # to these paths is NEVER allowed, regardless of any rule below. These
-# entries protect the audit hash chain and the Anthropic credentials and are
-# a mandatory contract floor — validate_policy.py rejects any policy that
-# drops them.
+# entries protect the audit hash chain, the Anthropic credentials and Claude
+# Code's own settings files, and are a mandatory contract floor —
+# validate_policy.py rejects any policy that drops them.
 hard_deny:
   - path: "/var/log/famulus/audit/**"
     access: [write]
@@ -21,6 +21,26 @@ hard_deny:
     reason: >-
       Anthropic credentials — exfiltration and tamper protection (read is
       denied too; this deliberately exceeds the write-only baseline)
+  # Claude Code's own settings (contracts-v1.1, ADR-018 item 8). Allow rules
+  # or hooks written there make later tool calls skip the approval broker,
+  # and MCP servers declared in .mcp.json or ~/.claude.json start with the
+  # CLI without any approval. The CLI's working directory is the
+  # conversation directory, which the model can write to.
+  - path: "**/.claude/settings.json"
+    access: [write]
+    reason: "project settings can grant tool permissions and define hooks"
+  - path: "**/.claude/settings.local.json"
+    access: [write]
+    reason: "local project settings can grant tool permissions and define hooks"
+  - path: "~/.claude/settings.json"
+    access: [write]
+    reason: "user settings can grant tool permissions and define hooks"
+  - path: "**/.mcp.json"
+    access: [write]
+    reason: "project MCP servers start with the CLI without approval"
+  - path: "~/.claude.json"
+    access: [write]
+    reason: "user MCP servers start with the CLI without approval"
 
 # Rules are ORDERED: evaluated top to bottom, FIRST MATCH WINS.
 rules:
@@ -38,6 +58,11 @@ rules:
   - match: "mcp__famulus_*__wallpaper_*"
     tier: 0
     behavior: auto-allow
+  # Per-user look and feel: dark mode, accent colour, font size.
+  - match: "mcp__famulus_*__appearance_*"
+    tier: 0
+    behavior: auto-allow
+    reason: "per-user appearance settings, easily changed back"
   - match: "mcp__famulus_*__app_launch"
     tier: 0
     behavior: auto-allow
@@ -62,10 +87,13 @@ rules:
 
   # ---- tier 1: user-authenticated ----
   # These wifi_* rules sit ABOVE the tier-2 network_* rule, so plain wifi
-  # joins stay at tier 1.
+  # joins stay at tier 1. Joining a network saves a NetworkManager profile
+  # under /etc/NetworkManager/system-connections/, a system mutation (C3
+  # mutates_system), so a restore point is taken first.
   - match: "mcp__famulus_*__wifi_*"
     tier: 1
     behavior: prompt
+    require_snapshot: true
   - match: "mcp__famulus_*__volume_*"
     tier: 1
     behavior: prompt

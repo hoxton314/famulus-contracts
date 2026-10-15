@@ -24,10 +24,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_SCHEMA_PATH = SCRIPT_DIR / "tier-policy.schema.json"
 
 # Contract-mandated hard-deny floor: (path, access mode that MUST be denied).
-# Audit chain integrity per ADR-5; credential protection per ADR-11.
+# Audit chain integrity per ADR-5; credential protection per ADR-11; Claude
+# Code's own settings files per ADR-018 item 8 (contracts-v1.1).
 HARD_DENY_FLOOR = (
     ("/var/log/famulus/audit/**", "write"),
     ("~/.claude/.credentials.json", "write"),
+    ("**/.claude/settings.json", "write"),
+    ("**/.claude/settings.local.json", "write"),
+    ("~/.claude/settings.json", "write"),
+    ("**/.mcp.json", "write"),
+    ("~/.claude.json", "write"),
 )
 
 
@@ -111,8 +117,8 @@ def semantic_errors(policy):
                 f"hard_deny: mandatory floor entry missing — an entry with "
                 f"path {path!r} denying {mode!r} access is required by "
                 "contract C5 (audit chain integrity per ADR-5, credential "
-                "protection per ADR-11); a famulus policy without it is "
-                "invalid"
+                "protection per ADR-11, Claude Code settings protection per "
+                "ADR-018); a famulus policy without it is invalid"
             )
     return errors
 

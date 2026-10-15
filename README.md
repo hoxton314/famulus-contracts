@@ -13,10 +13,10 @@ Famulus is an open-source, AI-native atomic Linux distribution built on Fedora A
 | C3 | [`skill-manifest/`](skill-manifest/) | Schema for the `manifest.yaml` that ships next to each `SKILL.md`, with example manifests. |
 | C4 | [`dbus-snapshot/`](dbus-snapshot/) | `org.famulus.Snapshot1` D-Bus introspection XML and the `snapshot_ref` format spec. |
 | C5 | [`tier-policy/`](tier-policy/) | Machine-readable permission/tier policy format, the shipped default policy, and the hard-deny floor. |
-| C6 | [`event-map/`](event-map/) | Claude stream-json → C2 D-Bus signal event map: normative table, synthetic NDJSON fixtures, sanitized real-CLI recordings (verified against `claude` 2.1.284), reference mapper. |
+| C6 | [`event-map/`](event-map/) | Claude stream-json → C2 D-Bus signal event map: normative table, synthetic NDJSON fixtures, sanitized real-CLI recordings (verified against `claude` 2.1.284 and 2.1.296), reference mapper. |
 | C7 | [`dbus-audit/`](dbus-audit/) | `org.famulus.Audit1` D-Bus introspection XML — the root audit-writer service that alone appends C1 records (per-uid chains, writer-assigned hashes, cgroup-gated `Append`). |
 
-**Stability:** frozen at `contracts-v1`. Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
+**Stability:** released as frozen tags: `contracts-v1`, `contracts-v1.0.1` (C6 recordings only) and `contracts-v1.1` (ADR-018: C2 authenticated approvals and `PendingPermissions`, C4 errors and restore reach, C5 default-policy and floor additions; all additive). Changes require an ADR, maintainer review, and a new frozen tag; already-frozen tags are never rewritten.
 
 ## Validating
 
